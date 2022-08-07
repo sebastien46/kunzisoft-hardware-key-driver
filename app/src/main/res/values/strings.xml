@@ -1,8 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">Key Driver</string>
 
-    <string name="hardware_key">Key Driver</string>
-    <string name="recovery_key">Set the recovery key.</string>
+    <string name="set_recovery_key">Set the recovery key.</string>
     <string name="attach_yubikey">Plug in the YubiKey.</string>
     <string name="attach_or_swipe_yubikey">Plug in or put the YubiKey on the NFC reader.</string>
     <string name="swipe_yubikey">Put the Yubikey on the NFC reader.</string>
@@ -10,6 +9,22 @@
     <string name="press_button">Press the button on your YubiKey.</string>
     <string name="unplug_yubikey">An error has occurred. Unplug your YubiKey.</string>
     <string name="invalid_challenge">An invalid challenge was passed. Contact the support of the app you are trying to use with.</string>
+
+    <string name="hardware_key">Hardware Key</string>
+    <string name="solo_key_pref" translatable="false">solo_key_pref</string>
+    <string name="solo_key">Solo Key</string>
+    <string name="yubikey_pref" translatable="false">yubikey_pref</string>
+    <string name="yubikey">YubiKey</string>
+    <string name="general">General</string>
+    <string name="default_slot_pref" translatable="false">default_slot_pref</string>
+    <string name="default_slot">Default slot</string>
+    <string name="default_slot_description">Default slot selected during a challenge-response</string>
     <string name="slot_1">Slot 1</string>
     <string name="slot_2">Slot 2</string>
+    <string name="virtualization">Virtualization</string>
+    <string name="virtual_key_pref">virtual_key_pref</string>
+    <string name="virtual_key">Use as virtual hardware key</string>
+    <string name="recovery_key">Recovery Key</string>
+    <string name="recovery_key_description">Recovery key to generate a proper virtual challenge-response</string>
+    <string name="in_development">(In development)</string>
 </resources>

@@ -62,7 +62,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
         slotPreferenceManager = SlotPreferenceManager(this)
         when (connectionManager.supportedConnectionMethods) {
             ConnectionManager.CONNECTION_VOID -> {
-                setText(R.string.recovery_key)
+                setText(R.string.set_recovery_key)
             }
             ConnectionManager.CONNECTION_METHOD_USB or ConnectionManager.CONNECTION_METHOD_NFC -> {
                 setText(R.string.attach_or_swipe_yubikey)

@@ -2,28 +2,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        app:key="general_category"
-        app:title="General">
+        app:key="hardware_key_pref"
+        app:title="@string/hardware_key">
 
         <Preference
-            app:key="default_slot"
-            app:title="Default slot"
-            app:summary="Default slot selected during a challenge-response"/>
+            app:key="@string/solo_key_pref"
+            app:title="@string/solo_key"
+            app:summary="@string/in_development"
+            app:enabled="false"/>
+
+        <Preference
+            app:key="@string/yubikey_pref"
+            app:title="@string/yubikey"/>
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        app:key="virtual_category"
-        app:title="Virtualization"
-        app:enabled="false">
-
-        <SwitchPreferenceCompat
-            app:key="virtual_key"
-            app:title="Use as virtual hardware key"/>
-        <Preference
-            app:key="recovery_key"
-            app:title="Recovery Key"
-            app:summary="Recovery key to generate a proper virtual challenge-response"/>
-
-    </PreferenceCategory>
 </PreferenceScreen>
