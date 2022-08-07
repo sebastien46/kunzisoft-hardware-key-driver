@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name" translatable="false">Hardware Key Driver</string>
+    <string name="app_name" translatable="false">Key Driver</string>
 
-    <string name="hardware_key">Hardware key</string>
+    <string name="hardware_key">Key Driver</string>
     <string name="recovery_key">Set the recovery key.</string>
     <string name="attach_yubikey">Plug in the YubiKey.</string>
     <string name="attach_or_swipe_yubikey">Plug in or put the YubiKey on the NFC reader.</string>
