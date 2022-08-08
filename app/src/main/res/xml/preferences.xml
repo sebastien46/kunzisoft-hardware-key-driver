@@ -6,8 +6,8 @@
         app:title="@string/hardware_key">
 
         <Preference
-            app:key="@string/solo_key_pref"
-            app:title="@string/solo_key"
+            app:key="@string/solokey_pref"
+            app:title="@string/solokey"
             app:summary="@string/in_development"
             app:enabled="false"/>
 

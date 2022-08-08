@@ -11,8 +11,8 @@
     <string name="invalid_challenge">An invalid challenge was passed. Contact the support of the app you are trying to use with.</string>
 
     <string name="hardware_key">Hardware Key</string>
-    <string name="solo_key_pref" translatable="false">solo_key_pref</string>
-    <string name="solo_key">Solo Key</string>
+    <string name="solokey_pref" translatable="false">solokey_pref</string>
+    <string name="solokey">SoloKey</string>
     <string name="yubikey_pref" translatable="false">yubikey_pref</string>
     <string name="yubikey">YubiKey</string>
     <string name="general">General</string>
