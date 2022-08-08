@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -14,7 +12,7 @@
    inkscape:export-filename="/home/joker/Projects/Kunzisoft/Inkscape/Android Icon Template_low"
    id="svg2"
    version="1.1"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
    xml:space="preserve"
    width="108"
    height="108"
@@ -31,16 +29,17 @@
      inkscape:window-width="1920"
      inkscape:window-height="1016"
      id="namedview4"
-     showgrid="false"
-     inkscape:zoom="6.4074074"
-     inkscape:cx="91.212994"
-     inkscape:cy="47.104699"
-     inkscape:window-x="1920"
+     showgrid="true"
+     inkscape:zoom="13.372386"
+     inkscape:cx="50.64822"
+     inkscape:cy="51.46858"
+     inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer6"
      showguides="false"
-     inkscape:guide-bbox="true"><inkscape:grid
+     inkscape:guide-bbox="true"
+     inkscape:document-rotation="0"><inkscape:grid
        type="xygrid"
        id="grid1474" /><sodipodi:guide
        position="55,67.250001"
@@ -1867,13 +1866,12 @@
        transform="translate(0,332)"
        id="rect1542"
        inkscape:connector-curvature="0" /><path
+       id="rect1381"
+       style="fill:#ff9800;fill-opacity:1"
+       d="M 54.90625 44 A 7 7 0 0 0 48 51 A 7 7 0 0 0 55 58 A 7 7 0 0 0 62 51 A 7 7 0 0 0 55 44 A 7 7 0 0 0 54.90625 44 z "
+       transform="translate(0,332)" /><path
        style="display:inline;fill:#ff9800;fill-opacity:1;stroke:none;stroke-width:0.07489827;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        d="m 49.039062,70.929688 v 10.732421 h 2.146485 V 70.929688 Z m 3.21875,0 v 9.121093 h 2.146485 v -9.121093 z m 3.220704,0 v 9.121093 H 57.625 v -9.121093 z m 3.21875,0 V 81.662109 H 60.84375 V 70.929688 Z"
        transform="translate(0,332)"
        id="rect1112"
-       inkscape:connector-curvature="0" /><path
-       style="display:inline;fill:#ff9800;fill-opacity:1;stroke-width:0.78318608"
-       d="m 51.382812,44.0625 a 4.103895,4.103895 0 0 0 -4.265624,4.148438 c 0,4.307524 7.832031,9.984375 7.832031,9.984374 0,0 7.832031,-5.67685 7.832031,-9.984374 a 4.1117267,4.1117267 0 0 0 -4.113281,-4.113282 4.103895,4.103895 0 0 0 -3.71875,2.34961 4.103895,4.103895 0 0 0 -3.566407,-2.384766 z"
-       transform="translate(0,332)"
-       id="path1092"
        inkscape:connector-curvature="0" /></g></svg>

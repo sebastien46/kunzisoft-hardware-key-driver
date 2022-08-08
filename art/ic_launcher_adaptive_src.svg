@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -15,7 +13,7 @@
    inkscape:export-filename="/home/joker/Projects/Kunzisoft/Inkscape/Android Icon Template_low"
    id="svg2"
    version="1.1"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
    xml:space="preserve"
    width="108"
    height="108"
@@ -30,18 +28,19 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="1043"
+     inkscape:window-height="1016"
      id="namedview4"
-     showgrid="false"
-     inkscape:zoom="5.6568542"
-     inkscape:cx="53.047885"
-     inkscape:cy="46.636266"
+     showgrid="true"
+     inkscape:zoom="32.133808"
+     inkscape:cx="54.067888"
+     inkscape:cy="49.189344"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer6"
      showguides="false"
-     inkscape:guide-bbox="true"><inkscape:grid
+     inkscape:guide-bbox="true"
+     inkscape:document-rotation="0"><inkscape:grid
        type="xygrid"
        id="grid1474" /><sodipodi:guide
        position="55,67.250001"
@@ -1927,7 +1926,32 @@
          in2="SourceGraphic"
          operator="atop"
          result="composite2"
-         id="feComposite1836" /></filter></defs><g
+         id="feComposite1836" /></filter><filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow"
+       id="filter1479"><feFlood
+         flood-opacity="0.2"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1469" /><feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite1"
+         id="feComposite1471" /><feGaussianBlur
+         in="composite1"
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur1473" /><feOffset
+         dx="1"
+         dy="0"
+         result="offset"
+         id="feOffset1475" /><feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="atop"
+         result="composite2"
+         id="feComposite1477" /></filter></defs><g
      transform="translate(0,-84)"
      style="display:inline"
      inkscape:label="Work_Background"
@@ -2121,11 +2145,12 @@
        style="display:inline;fill:#ff9800;fill-opacity:1;stroke:none;stroke-width:0.07489827;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        d="m 49.038468,402.9304 v 10.73242 h 2.146485 V 402.9304 Z m 3.21875,0 v 9.12109 h 2.146485 v -9.12109 z m 3.220704,0 v 9.12109 h 2.146484 v -9.12109 z m 3.21875,0 v 10.73242 h 2.146484 V 402.9304 Z"
        id="rect1112-3"
-       inkscape:connector-curvature="0" /><path
-       style="display:inline;fill:#ff9800;fill-opacity:1;stroke-width:0.78318608;filter:url(#filter1838)"
-       d="m 51.382218,376.06321 a 4.103895,4.103895 0 0 0 -4.265624,4.14844 c 0,4.30752 7.832031,9.98437 7.832031,9.98437 0,0 7.832031,-5.67685 7.832031,-9.98437 a 4.1117267,4.1117267 0 0 0 -4.113281,-4.11328 4.103895,4.103895 0 0 0 -3.71875,2.34961 4.103895,4.103895 0 0 0 -3.566407,-2.38477 z"
-       id="path1092-6"
-       inkscape:connector-curvature="0" /></g><g
+       inkscape:connector-curvature="0" /><circle
+       style="fill:#ff9800;filter:url(#filter1479)"
+       id="path1467"
+       cx="55"
+       cy="383"
+       r="7" /></g><g
      inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="Mask_Circle"

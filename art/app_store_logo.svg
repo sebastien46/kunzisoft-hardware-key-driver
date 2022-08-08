@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -15,9 +13,9 @@
    viewBox="0 0 135.46666 135.46667"
    version="1.1"
    id="svg3912"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
    sodipodi:docname="app_store_logo.svg"
-   inkscape:export-filename="/home/joker/Projects/contributor-pro/art/app_store_logo.png"
+   inkscape:export-filename="/home/joker/Projects/Key-Driver/art/app_store_logo.png"
    inkscape:export-xdpi="96.000008"
    inkscape:export-ydpi="96.000008">
   <defs
@@ -1199,6 +1197,70 @@
          result="composite2"
          id="feComposite1164" />
     </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow"
+       id="filter1167">
+      <feFlood
+         flood-opacity="0.2"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1154" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite1159" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur1161" />
+      <feOffset
+         dx="1"
+         dy="0"
+         result="offset"
+         id="feOffset1163" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite1165" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow"
+       id="filter1179">
+      <feFlood
+         flood-opacity="0.2"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1169" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite1"
+         id="feComposite1171" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur1173" />
+      <feOffset
+         dx="1"
+         dy="0"
+         result="offset"
+         id="feOffset1175" />
+      <feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="atop"
+         result="composite2"
+         id="feComposite1177" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -1207,12 +1269,12 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="86.89682"
-     inkscape:cy="284.85534"
+     inkscape:zoom="2.5201327"
+     inkscape:cx="113.47897"
+     inkscape:cy="246.5695"
      inkscape:document-units="mm"
      inkscape:current-layer="layer2"
-     showgrid="false"
+     showgrid="true"
      units="px"
      inkscape:pagecheckerboard="true"
      inkscape:window-width="1920"
@@ -1221,7 +1283,8 @@
      inkscape:window-y="27"
      inkscape:window-maximized="1"
      showguides="true"
-     inkscape:guide-bbox="true">
+     inkscape:guide-bbox="true"
+     inkscape:document-rotation="0">
     <inkscape:grid
        type="xygrid"
        id="grid3914"
@@ -1320,12 +1383,12 @@
        width="3.742512"
        id="rect1118"
        style="fill:#ff9800;fill-opacity:1;stroke:none;stroke-width:0.14164558;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers" />
-    <path
-       transform="matrix(0.31214621,0,0,0.31214621,14.587626,39.762003)"
-       id="path1092"
-       d="m 190.78559,31.750001 a 22.923398,22.923398 0 0 0 -20.77981,13.124082 22.923398,22.923398 0 0 0 -43.74696,9.843055 c 0,24.060827 43.74696,55.777362 43.74696,55.777362 0,0 43.74695,-31.716535 43.74695,-55.777362 A 22.967144,22.967144 0 0 0 190.78559,31.750001 Z"
-       inkscape:connector-curvature="0"
-       style="fill:#ff9800;fill-opacity:1;stroke-width:4.37469435;filter:url(#filter1156)" />
+    <circle
+       style="fill:#ff9800;fill-rule:evenodd;stroke-width:0.264583;fill-opacity:1;filter:url(#filter1179)"
+       id="path329"
+       cx="67.73333"
+       cy="61.383331"
+       r="12.7" />
   </g>
   <g
      inkscape:groupmode="layer"

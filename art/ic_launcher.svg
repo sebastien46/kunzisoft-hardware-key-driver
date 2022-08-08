@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -15,7 +13,7 @@
    inkscape:export-filename="/home/joker/Projects/KeePassDX/art/icon.png"
    id="svg2"
    version="1.1"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
    xml:space="preserve"
    width="192"
    height="192"
@@ -33,15 +31,16 @@
      inkscape:window-height="1016"
      id="namedview4"
      showgrid="true"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="9.1190929"
-     inkscape:cy="33.028979"
+     inkscape:zoom="5.1648777"
+     inkscape:cx="51.588632"
+     inkscape:cy="107.1487"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer5"
      showguides="true"
-     inkscape:guide-bbox="true"><inkscape:grid
+     inkscape:guide-bbox="true"
+     inkscape:document-rotation="0"><inkscape:grid
        id="grid4646"
        type="xygrid"
        empspacing="4" /><sodipodi:guide
@@ -733,7 +732,32 @@
          in2="offset"
          operator="over"
          result="composite2"
-         id="feComposite1166" /></filter></defs><g
+         id="feComposite1166" /></filter><filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Drop Shadow"
+       id="filter1455"><feFlood
+         flood-opacity="0.2"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1445" /><feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite1"
+         id="feComposite1447" /><feGaussianBlur
+         in="composite1"
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur1449" /><feOffset
+         dx="1"
+         dy="0"
+         result="offset"
+         id="feOffset1451" /><feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="atop"
+         result="composite2"
+         id="feComposite1453" /></filter></defs><g
      transform="matrix(1.25,0,0,-1.25,0,192)"
      inkscape:label="Icon Template"
      inkscape:groupmode="layer"
@@ -2049,9 +2073,9 @@
        height="22.857147"
        width="4.5714293"
        id="rect1118"
-       style="display:inline;fill:#ff9800;fill-opacity:1;stroke:none;stroke-width:0.17301823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers" /><path
-       transform="matrix(0.38128248,0,0,0.38128248,31.195636,63.894281)"
-       id="path1092"
-       d="m 190.78559,31.750001 a 22.923398,22.923398 0 0 0 -20.77981,13.124082 22.923398,22.923398 0 0 0 -43.74696,9.843055 c 0,24.060827 43.74696,55.777362 43.74696,55.777362 0,0 43.74695,-31.716535 43.74695,-55.777362 A 22.967144,22.967144 0 0 0 190.78559,31.750001 Z"
-       inkscape:connector-curvature="0"
-       style="display:inline;fill:#ff9800;fill-opacity:1;stroke-width:4.37469435;filter:url(#filter1156)" /></g></svg>
+       style="display:inline;fill:#ff9800;fill-opacity:1;stroke:none;stroke-width:0.17301823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers" /><circle
+       style="fill:#ff9800;fill-opacity:1;filter:url(#filter1455)"
+       id="path1443"
+       cx="96"
+       cy="91"
+       r="15" /></g></svg>
