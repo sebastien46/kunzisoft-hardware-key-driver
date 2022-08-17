@@ -1,0 +1,5 @@
+ * Add "About" page
+ * Add PRIVACY file
+ * Add Yubikey default slot setting
+ * Add contribution dialog
+ * Small changes

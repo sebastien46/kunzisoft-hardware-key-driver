@@ -8,8 +8,8 @@ android {
         applicationId "com.kunzisoft.hardware.key"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 2
-        versionName "0.1.0"
+        versionCode 3
+        versionName "0.1.1"
     }
     buildTypes {
         release {
@@ -38,8 +38,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation 'androidx.fragment:fragment-ktx:1.5.1'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.fragment:fragment-ktx:1.5.2'
+    implementation 'androidx.appcompat:appcompat:1.5.0'
     implementation 'com.google.android.material:material:1.6.1'
 
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"

@@ -1,0 +1,3 @@
+Key Driver is a **driver application for hardware keys** (SoloKey and YubiKey) that provides an answer to a challenge for applications requiring physical key authentication.
+
+Compatible with [KeePassDX](https://play.google.com/store/apps/details?id=com.kunzisoft.keepass.free&hl=en&gl=US), it allows you to connect with your physical key in USB OTG or NFC.
