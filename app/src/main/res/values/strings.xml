@@ -9,7 +9,7 @@
     <string name="contribution_url" translatable="false">https://www.keepassdx.com/#donation</string>
     <string name="about_description">Driver application for hardware keys, SoloKey and YubiKey.</string>
     <string name="html_about_licence">Key Driver © %1$d Kunzisoft is &lt;strong&gt;open source&lt;/strong&gt; and &lt;strong&gt;without advertising&lt;/strong&gt;. \nIt is provided as is, under &lt;strong&gt;GPLv3&lt;/strong&gt; license, without any warranty.</string>
-    <string name="html_about_privacy">&lt;strong&gt;No user data is retrieved&lt;/strong&gt;, this application does not connect to any server, works only locally and fully respects users\' privacy.</string>
+    <string name="html_about_privacy">&lt;strong&gt;No user data is retrieved&lt;/strong&gt;, this application does not connect to any server, works only locally and fully respects the privacy of users.</string>
     <string name="html_about_contribution">In order to &lt;strong&gt;keep our freedom&lt;/strong&gt;, &lt;strong&gt;fix bugs&lt;/strong&gt;, &lt;strong&gt;add features&lt;/strong&gt; and &lt;strong&gt;to be always active&lt;/strong&gt;, we count on your &lt;strong&gt;contribution&lt;/strong&gt;.</string>
 
     <string name="set_recovery_key">Set the recovery key.</string>
