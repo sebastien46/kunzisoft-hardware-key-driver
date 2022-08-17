@@ -1,39 +1,37 @@
 package com.kunzisoft.hardware.key
 
-import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import com.kunzisoft.hardware.yubikey.Slot
 
 /**
- * Manages the user's preferences for YubiKey slots based upon the called activity and a string that
- * uniquely identifies the purpose of the requested action set by the calling activity.
+ * Manages the user's preferences for YubiKey slots and a string that
+ * uniquely identifies the purpose of the requested action.
  */
-internal class SlotPreferenceManager(activity: Activity) {
+internal class SlotPreferenceManager(context: Context) {
     private val slotPreferences: SharedPreferences
 
     /**
      * Gets the preferred slot for a given unique purpose identifier.
      *
-     * @param identifier  Uniquely identifies the purpose of the request. Should be set by
-     * the invoking activity. If null or "" is passed, the default identifier will
+     * @param identifier  Uniquely identifies the purpose of the request.
+     * If null or "" is passed, the default identifier will
      * be used.
-     * @param defaultSlot The default slot to return in case no previous preferred slot is saved for
-     * the given purpose.
      * @return Returns the slot that should be pre-selected for the given purpose.
      */
-    fun getPreferredSlot(identifier: String?, defaultSlot: Slot): Slot {
+    fun getPreferredSlot(identifier: String?): Slot {
         if (isEmptyIdentifier(identifier)) {
-            return getPreferredSlot(DEFAULT_IDENTIFIER, defaultSlot)
+            return getPreferredSlot(DEFAULT_IDENTIFIER)
         }
         val preference = slotPreferences.getInt(identifier, -1)
         if (preference == -1) {
-            return defaultSlot
+            return Slot.CHALLENGE_HMAC_2
         }
 
         // We could do a binary search here, but since we only have a very small amount of slots...
         for (slot in Slot.values()) {
-            if (slot.address.toInt() == preference) return slot
+            if (slot.address.toInt() == preference)
+                return slot
         }
         throw IllegalStateException()
     }
@@ -43,8 +41,8 @@ internal class SlotPreferenceManager(activity: Activity) {
      * only if the requested YubiKey transaction was completed successfully. This method updates the
      * preference asynchronously and can thus be safely called from the UI thread.
      *
-     * @param identifier Uniquely identifies the purpose of the request. Should be set by
-     * the invoking activity. If null or "" is passed, the default identifier will
+     * @param identifier Uniquely identifies the purpose of the request.
+     * If null or "" is passed, the default identifier will
      * be used.
      * @param slot       The slot to set as new preference for the given purpose.
      */
@@ -58,6 +56,14 @@ internal class SlotPreferenceManager(activity: Activity) {
         editor.apply()
     }
 
+    fun getDefaultSlot(): Slot {
+        return getPreferredSlot(DEFAULT_IDENTIFIER)
+    }
+
+    fun setDefaultSlot(slot: Slot) {
+        setPreferredSlot(null, slot)
+    }
+
     private fun isEmptyIdentifier(identifier: String?): Boolean {
         return identifier == null || identifier == ""
     }
@@ -67,14 +73,9 @@ internal class SlotPreferenceManager(activity: Activity) {
         private const val DEFAULT_IDENTIFIER = "default"
     }
 
-    /**
-     * Should be instantiated exactly once by an activity that wants to store a slot preference.
-     *
-     * @param activity Required to store slot preferences are stored for each distinct activity.
-     */
     init {
-        slotPreferences = activity.getSharedPreferences(
-            activity.localClassName + "_" + SLOT_PREFERENCES_FILE_NAME,
+        slotPreferences = context.getSharedPreferences(
+            context.applicationInfo.packageName + "_" + SLOT_PREFERENCES_FILE_NAME,
             Context.MODE_PRIVATE
         )
     }

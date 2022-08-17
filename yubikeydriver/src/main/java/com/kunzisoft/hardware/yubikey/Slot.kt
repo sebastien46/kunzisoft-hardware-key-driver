@@ -37,4 +37,20 @@ enum class Slot(val address: Byte) {
         if (!isChallengeResponseSlot)
             throw YubiKeyException("Invalid slot")
     }
+
+    companion object {
+        val DEFAULT = CHALLENGE_HMAC_2
+
+        fun fromString(slotString: String): Slot {
+            return values().find { slotString == it.toString() } ?: DEFAULT
+        }
+
+        fun toStringArray(): Array<String> {
+            return values().map { it.toString() }.toTypedArray()
+        }
+
+        fun toChallengeStringArray(): Array<String> {
+            return arrayOf(CHALLENGE_HMAC_1.toString(), CHALLENGE_HMAC_2.toString())
+        }
+    }
 }

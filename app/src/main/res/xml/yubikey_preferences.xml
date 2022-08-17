@@ -5,7 +5,7 @@
         app:key="general_category_pref"
         app:title="@string/general">
 
-        <Preference
+        <ListPreference
             app:key="@string/default_slot_pref"
             app:title="@string/default_slot"
             app:summary="@string/default_slot_description"/>

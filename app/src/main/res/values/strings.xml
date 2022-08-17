@@ -29,7 +29,7 @@
     <string name="general">General</string>
     <string name="default_slot_pref" translatable="false">default_slot_pref</string>
     <string name="default_slot">Default slot</string>
-    <string name="default_slot_description">Default slot selected during a challenge-response</string>
+    <string name="default_slot_description">First default slot selected during a challenge-response</string>
     <string name="slot_1">Slot 1</string>
     <string name="slot_2">Slot 2</string>
     <string name="virtualization">Virtualization</string>
