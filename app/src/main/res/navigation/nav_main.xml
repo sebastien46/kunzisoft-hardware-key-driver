@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/settingFragment">
+    <fragment
+        android:id="@+id/settingFragment"
+        android:name="com.kunzisoft.hardware.key.SettingsFragment">
+        <action
+            android:id="@+id/action_settingFragment_to_yubikeySettingsFragment"
+            app:destination="@id/yubikeySettingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/yubikeySettingsFragment"
+        android:name="com.kunzisoft.hardware.key.YubikeySettingsFragment"
+        android:label="@string/yubikey" >
+        <action
+            android:id="@+id/action_yubikeySettingsFragment_to_settingFragment"
+            app:destination="@id/settingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.kunzisoft.hardware.key.AboutFragment"
+        android:label="@string/about"
+        tools:layout="@layout/fragment_about" >
+        <action
+            android:id="@+id/action_aboutFragment_to_settingFragment"
+            app:destination="@id/settingFragment" />
+    </fragment>
+    <action
+        android:id="@+id/action_open_aboutFragment"
+        app:destination="@id/aboutFragment" />
+</navigation>

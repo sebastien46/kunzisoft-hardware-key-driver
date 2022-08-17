@@ -8,8 +8,7 @@
         <Preference
             app:key="@string/solokey_pref"
             app:title="@string/solokey"
-            app:summary="@string/in_development"
-            app:enabled="false"/>
+            app:summary="@string/in_development"/>
 
         <Preference
             app:key="@string/yubikey_pref"

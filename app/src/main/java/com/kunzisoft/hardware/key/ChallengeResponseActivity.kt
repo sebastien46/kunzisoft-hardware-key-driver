@@ -78,7 +78,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
                 return
             }
         }
-        selectedSlot = slotPreferenceManager.getPreferredSlot(purpose, Slot.CHALLENGE_HMAC_2)
+        selectedSlot = slotPreferenceManager.getPreferredSlot(purpose)
         selectSlot(selectedSlot)
         binding.slot1.setOnCheckedChangeListener { _, b ->
             if (b)
