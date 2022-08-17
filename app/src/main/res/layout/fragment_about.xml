@@ -134,7 +134,7 @@
                     android:id="@+id/about_contribution_link"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/contribution_url"
+                    android:text="@string/keepro_url"
                     android:autoLink="web"/>
 
             </LinearLayout>

@@ -14,15 +14,15 @@
 
     <PreferenceCategory
         app:key="virtual_category_pref"
-        app:title="@string/virtualization"
-        app:enabled="false">
+        app:title="@string/virtualization">
 
         <SwitchPreferenceCompat
-            app:key="virtual_key_pref"
+            app:key="@string/virtual_key_pref"
             app:title="@string/virtual_key"
             app:summary="@string/in_development"/>
         <Preference
-            app:key="recovery_key_pref"
+            app:key="@string/recovery_key_pref"
+            app:enabled="false"
             app:title="@string/recovery_key"
             app:summary="@string/recovery_key_description"/>
 
