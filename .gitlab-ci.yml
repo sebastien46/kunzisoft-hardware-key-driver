@@ -20,11 +20,11 @@ variables:
   ANDROID_BUILD_TOOLS: "32.0.0"
 
   # It's what version of the command line tools we're going to download from the official site.
-  # Official Site-> https://developer.android.com/studio/emulator_archive
+  # Official Site-> https://developer.android.com/studio/index.html#command-tools
   # There, look down below at the cli tools only, sdk tools package is of format:
   #        commandlinetools-os_type-ANDROID_SDK_TOOLS_latest.zip
   # when the script was last modified for latest compileSdkVersion, it was which is written down below
-  ANDROID_SDK_TOOLS: "8807927"
+  ANDROID_SDK_TOOLS: "8512546"
 
 # Packages installation before running script
 before_script:
