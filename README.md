@@ -13,6 +13,9 @@ The application allows to use :
 [<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png"
       alt="Get it on Google Play"
 	height="80">](https://play.google.com/store/apps/details?id=com.kunzisoft.hardware.key)
+[<img src="https://gitlab.com/kunzisoft/gitlab-badge/-/raw/master/get-it-on-gitlab.png"
+      alt="Get it on GitLab"
+	height="80">](https://gitlab.com/kunzisoft/android-hardware-key-driver/-/releases)
 
 ## Integration
 

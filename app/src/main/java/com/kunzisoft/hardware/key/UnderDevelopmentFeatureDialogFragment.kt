@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.core.text.HtmlCompat
 import androidx.fragment.app.DialogFragment
@@ -23,12 +24,16 @@ class UnderDevelopmentFeatureDialogFragment : DialogFragment() {
                 .append(HtmlCompat.fromHtml(getString(R.string.html_text_dev_feature_contibute), HtmlCompat.FROM_HTML_MODE_LEGACY)).append(" ")
                 .append(HtmlCompat.fromHtml(getString(R.string.html_text_dev_feature_encourage), HtmlCompat.FROM_HTML_MODE_LEGACY))
             builder.setPositiveButton(R.string.contribute) { _, _ ->
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(getString(R.string.keepro_url))
+                try {
+                    startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(getString(R.string.keepro_url))
+                        )
                     )
-                )
+                } catch (e: Exception) {
+                    Log.e("Link", "Unable to open link", e)
+                }
             }
             builder.setMessage(stringBuilder)
             // Create the AlertDialog object and return it
