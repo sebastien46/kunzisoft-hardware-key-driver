@@ -1,0 +1,1 @@
+ * Fix flags in USB PendingIntent

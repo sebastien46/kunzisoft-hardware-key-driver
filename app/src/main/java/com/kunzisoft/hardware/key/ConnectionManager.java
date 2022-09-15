@@ -13,6 +13,7 @@ import android.hardware.usb.UsbManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -92,6 +93,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 	@Override
 	public void onActivityStarted(final Activity activity) {
+		// Debug with dummy connection if no supported connection
 		if (BuildConfig.DEBUG && this.getSupportedConnectionMethods() == CONNECTION_VOID) {
 			initDummyConnection();
 		} else {
@@ -130,8 +132,17 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 		final IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			flags = PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT;
+		}
 		NfcAdapter.getDefaultAdapter(this.activity).enableForegroundDispatch(this.activity,
-				PendingIntent.getActivity(this.activity, -1, new Intent(this.activity, this.activity.getClass()), 0),
+				PendingIntent.getActivity(
+						this.activity,
+						-1,
+						new Intent(this.activity, this.activity.getClass()),
+						flags
+				),
 				new IntentFilter[]{filter},
 				new String[][]{new String[]{IsoDep.class.getName()}});
 	}
@@ -148,7 +159,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 			return;
 		}
 
-		if (!this.isYubiKeyPlugged()) {
+		if (this.isYubiKeyNotPlugged()) {
 			receiver.onYubiKeyUnplugged();
 			return;
 		}
@@ -157,17 +168,17 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 		this.activity.registerReceiver(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
 	}
 
-	private boolean isYubiKeyPlugged() {
+	private boolean isYubiKeyNotPlugged() {
 		final UsbManager usbManager = (UsbManager) this.activity.getSystemService(Context.USB_SERVICE);
 
 		assert usbManager != null;
 
 		for (final UsbDevice device : usbManager.getDeviceList().values()) {
 			if (UsbYubiKey.Type.isDeviceKnown(device))
-				return true;
+				return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	@Override
@@ -176,7 +187,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 		switch (intent.getAction()) {
 			case ACTION_USB_PERMISSION_REQUEST:
-				if(!this.isYubiKeyPlugged()) // Do not keep asking for permission to access a YubiKey that was unplugged already
+				if(this.isYubiKeyNotPlugged()) // Do not keep asking for permission to access a YubiKey that was unplugged already
 					break;
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				this.requestPermission((UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE));
@@ -239,7 +250,19 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 			this.connectReceiver.onYubiKeyConnected(new UsbYubiKey(device, usbManager.openDevice(device)));
 			this.connectReceiver = null;
 		} else {
-			usbManager.requestPermission(device, PendingIntent.getBroadcast(this.activity, 0, new Intent(ACTION_USB_PERMISSION_REQUEST), 0));
+			int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				flags = PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT;
+			}
+			usbManager.requestPermission(
+					device,
+					PendingIntent.getBroadcast(
+							this.activity,
+							0,
+							new Intent(ACTION_USB_PERMISSION_REQUEST),
+							flags
+					)
+			);
 		}
 	}
 
