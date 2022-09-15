@@ -158,7 +158,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 			return;
 		}
 
-		if (!this.isYubiKeyPlugged()) {
+		if (this.isYubiKeyNotPlugged()) {
 			receiver.onYubiKeyUnplugged();
 			return;
 		}
@@ -167,17 +167,17 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 		this.activity.registerReceiver(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
 	}
 
-	private boolean isYubiKeyPlugged() {
+	private boolean isYubiKeyNotPlugged() {
 		final UsbManager usbManager = (UsbManager) this.activity.getSystemService(Context.USB_SERVICE);
 
 		assert usbManager != null;
 
 		for (final UsbDevice device : usbManager.getDeviceList().values()) {
 			if (UsbYubiKey.Type.isDeviceKnown(device))
-				return true;
+				return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	@Override
@@ -186,7 +186,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 		switch (intent.getAction()) {
 			case ACTION_USB_PERMISSION_REQUEST:
-				if(!this.isYubiKeyPlugged()) // Do not keep asking for permission to access a YubiKey that was unplugged already
+				if(this.isYubiKeyNotPlugged()) // Do not keep asking for permission to access a YubiKey that was unplugged already
 					break;
 			case UsbManager.ACTION_USB_DEVICE_ATTACHED:
 				this.requestPermission((UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE));
