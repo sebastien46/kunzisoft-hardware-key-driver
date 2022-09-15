@@ -93,6 +93,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 	@Override
 	public void onActivityStarted(final Activity activity) {
+		// Debug with dummy connection if no supported connection
 		if (BuildConfig.DEBUG && this.getSupportedConnectionMethods() == CONNECTION_VOID) {
 			initDummyConnection();
 		} else {
