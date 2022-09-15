@@ -13,6 +13,7 @@ import android.hardware.usb.UsbManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -130,8 +131,17 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 
 		final IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			flags = PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT;
+		}
 		NfcAdapter.getDefaultAdapter(this.activity).enableForegroundDispatch(this.activity,
-				PendingIntent.getActivity(this.activity, -1, new Intent(this.activity, this.activity.getClass()), 0),
+				PendingIntent.getActivity(
+						this.activity,
+						-1,
+						new Intent(this.activity, this.activity.getClass()),
+						flags
+				),
 				new IntentFilter[]{filter},
 				new String[][]{new String[]{IsoDep.class.getName()}});
 	}
@@ -239,7 +249,19 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 			this.connectReceiver.onYubiKeyConnected(new UsbYubiKey(device, usbManager.openDevice(device)));
 			this.connectReceiver = null;
 		} else {
-			usbManager.requestPermission(device, PendingIntent.getBroadcast(this.activity, 0, new Intent(ACTION_USB_PERMISSION_REQUEST), 0));
+			int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				flags = PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT;
+			}
+			usbManager.requestPermission(
+					device,
+					PendingIntent.getBroadcast(
+							this.activity,
+							0,
+							new Intent(ACTION_USB_PERMISSION_REQUEST),
+							flags
+					)
+			);
 		}
 	}
 
