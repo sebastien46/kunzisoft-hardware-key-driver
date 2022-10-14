@@ -42,7 +42,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
     private var purpose: String? = null
     private var challenge: ByteArray? = null
 
-    private var newIntentReceive: Boolean = false
+    private var newIntentReceive: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,11 +96,11 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-
-        if (newIntentReceive) {
-            connectionManager.onReceive(this, intent)
-            newIntentReceive = false
+        // Call connection manager broadcast response
+        newIntentReceive?.let {
+            connectionManager.onReceive(this, it)
         }
+        newIntentReceive = null
     }
 
     private fun selectSlot(slot: Slot) {
@@ -178,8 +178,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
         super.onNewIntent(intent)
         // To call broadcast receiver in onResume
         if (intent != null) {
-            setIntent(intent)
-            newIntentReceive = true
+            newIntentReceive = intent
         }
     }
 
