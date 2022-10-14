@@ -17,6 +17,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.kunzisoft.hardware.yubikey.challenge.DummyYubiKey;
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey;
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey;
@@ -123,7 +125,6 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 		this.activity.registerReceiver(this, new IntentFilter(ACTION_USB_PERMISSION_REQUEST));
 		this.activity.registerReceiver(this, new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED));
 
-		assert usbManager != null;
 		for (final UsbDevice device : usbManager.getDeviceList().values())
 			this.requestPermission(device);
 	}
@@ -171,8 +172,6 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 	private boolean isYubiKeyNotPlugged() {
 		final UsbManager usbManager = (UsbManager) this.activity.getSystemService(Context.USB_SERVICE);
 
-		assert usbManager != null;
-
 		for (final UsbDevice device : usbManager.getDeviceList().values()) {
 			if (UsbYubiKey.Type.isDeviceKnown(device))
 				return false;
@@ -182,9 +181,7 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 	}
 
 	@Override
-	public void onReceive(final Context context, final Intent intent) {
-		assert intent.getAction() != null;
-
+	public void onReceive(final Context context, @NonNull Intent intent) {
 		switch (intent.getAction()) {
 			case ACTION_USB_PERMISSION_REQUEST:
 				if(this.isYubiKeyNotPlugged()) // Do not keep asking for permission to access a YubiKey that was unplugged already
@@ -240,7 +237,6 @@ class ConnectionManager extends BroadcastReceiver implements Application.Activit
 		if (!UsbYubiKey.Type.isDeviceKnown(device))
 			return;
 
-		assert usbManager != null;
 		if (usbManager.hasPermission(device)) {
 			this.activity.unregisterReceiver(this);
 

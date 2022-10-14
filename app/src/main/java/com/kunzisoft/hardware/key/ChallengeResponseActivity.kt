@@ -163,7 +163,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         // This is kind of ugly but Android doesn't leave us any other choice
-        connectionManager.onReceive(this, intent)
+        if (intent != null) {
+            connectionManager.onReceive(this, intent)
+        }
     }
 
     companion object {
