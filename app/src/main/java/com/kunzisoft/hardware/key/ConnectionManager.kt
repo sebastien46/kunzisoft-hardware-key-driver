@@ -1,39 +1,35 @@
 package com.kunzisoft.hardware.key
 
 import android.app.Activity
-import android.content.BroadcastReceiver
 import android.app.Application.ActivityLifecycleCallbacks
-import com.kunzisoft.hardware.key.ConnectionManager.YubiKeyConnectReceiver
-import com.kunzisoft.hardware.key.ConnectionManager.YubiKeyUsbUnplugReceiver
-import com.kunzisoft.hardware.yubikey.challenge.YubiKey
-import android.os.Bundle
-import com.kunzisoft.hardware.key.ConnectionManager
-import com.kunzisoft.hardware.yubikey.challenge.DummyYubiKey
-import android.hardware.usb.UsbManager
-import android.content.IntentFilter
-import android.hardware.usb.UsbDevice
-import android.nfc.NfcAdapter
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
-import android.os.Build
 import android.content.Intent
-import android.nfc.tech.IsoDep
-import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
-import android.os.Parcelable
-import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
+import android.nfc.NfcAdapter
 import android.nfc.Tag
+import android.nfc.tech.IsoDep
+import android.os.Build
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
-import java.lang.Exception
+import com.kunzisoft.hardware.yubikey.challenge.DummyYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlin.experimental.and
 import kotlin.experimental.or
 
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
  */
-internal class ConnectionManager(private val activity: Activity) : BroadcastReceiver(),
+internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
     ActivityLifecycleCallbacks {
-    private var isActivityResumed = false
+
     private var connectReceiver: YubiKeyConnectReceiver? = null
     private var unplugReceiver: YubiKeyUsbUnplugReceiver? = null
 
@@ -62,48 +58,48 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     /**
      * May only be instantiated as soon as the basic initialization of a new activity is complete
-     *
-     * @param activity As the connection lifecycle depends on the activity lifecycle, an active
-     * [Activity] must be passed
      */
     init {
         activity.application.registerActivityLifecycleCallbacks(this)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-    override fun onActivityStarted(activity: Activity) {
+
+    override fun onActivityStarted(activity: Activity) {}
+
+    override fun onActivityResumed(activity: Activity) {
         // Debug with dummy connection if no supported connection
-        if (BuildConfig.DEBUG && supportedConnectionMethods == CONNECTION_VOID) {
-            initDummyConnection()
+        if (BuildConfig.DEBUG && getSupportedConnectionMethods(activity) == CONNECTION_VOID) {
+            initDummyConnection(activity)
         } else {
-            if (connectReceiver == null
-                || supportedConnectionMethods and CONNECTION_METHOD_USB == CONNECTION_VOID)
-                return
-            initUSBConnection()
+            if (connectReceiver != null) {
+                if (getSupportedConnectionMethods(activity)
+                    and CONNECTION_METHOD_USB != CONNECTION_VOID) {
+                    initUSBConnection(activity)
+                }
+                if (getSupportedConnectionMethods(activity)
+                    and CONNECTION_METHOD_NFC != CONNECTION_VOID) {
+                    initNFCConnection(activity)
+                }
+            }
         }
     }
 
-    override fun onActivityResumed(activity: Activity) {
-        if (connectReceiver == null
-            || supportedConnectionMethods and CONNECTION_METHOD_NFC == CONNECTION_VOID)
-            return
-        initNFCConnection()
-        isActivityResumed = true
-    }
-
-    private fun initDummyConnection() {
+    private fun initDummyConnection(activity: Activity) {
         // Debug by injecting a known byte array
         connectReceiver!!.onYubiKeyConnected(DummyYubiKey(activity))
     }
 
-    private fun initUSBConnection() {
-        val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
+    private fun initUSBConnection(activity: Activity) {
         activity.registerReceiver(this, IntentFilter(ACTION_USB_PERMISSION_REQUEST))
         activity.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED))
-        for (device in usbManager.deviceList.values) requestPermission(device)
+
+        val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
+        for (device in usbManager.deviceList.values)
+            requestPermission(activity, device)
     }
 
-    private fun initNFCConnection() {
+    private fun initNFCConnection(activity: Activity) {
         val filter = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -116,7 +112,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                 -1,
                 Intent(activity, activity.javaClass),
                 flags
-            ), arrayOf(filter), arrayOf(
+            ),
+            arrayOf(filter),
+            arrayOf(
                 arrayOf(
                     IsoDep::class.java.name
                 )
@@ -139,56 +137,63 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * @param receiver The receiver implementation to be called as soon as no YubiKey is connected
      * anymore.
      */
-    fun waitForYubiKeyUnplug(receiver: YubiKeyUsbUnplugReceiver) {
-        if (supportedConnectionMethods and CONNECTION_METHOD_USB == CONNECTION_VOID) {
+    fun waitForYubiKeyUnplug(context: Context, receiver: YubiKeyUsbUnplugReceiver) {
+        if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_USB == CONNECTION_VOID) {
             receiver.onYubiKeyUnplugged()
             return
         }
-        if (isYubiKeyNotPlugged) {
+        if (!isYubiKeyPlugged(context)) {
             receiver.onYubiKeyUnplugged()
             return
         }
         unplugReceiver = receiver
-        activity.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
+        context.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
     }
 
-    private val isYubiKeyNotPlugged: Boolean
-        get() {
-            val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
-            for (device in usbManager.deviceList.values) {
-                if (UsbYubiKey.Type.isDeviceKnown(device)) return false
-            }
-            return true
+    private fun isYubiKeyPlugged(context: Context): Boolean {
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+        for (device in usbManager.deviceList.values) {
+            if (UsbYubiKey.Type.isDeviceKnown(device)) return true
         }
+        return false
+    }
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            ACTION_USB_PERMISSION_REQUEST -> {
-                if (!isYubiKeyNotPlugged) // Do not keep asking for permission to access a YubiKey that was unplugged already
-                requestPermission(intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as UsbDevice?)
-            }
-            UsbManager.ACTION_USB_DEVICE_ATTACHED -> requestPermission(
-                intent.getParcelableExtra<Parcelable>(
-                    UsbManager.EXTRA_DEVICE
-                ) as UsbDevice?
-            )
-            UsbManager.ACTION_USB_DEVICE_DETACHED -> if (UsbYubiKey.Type.isDeviceKnown(
+            ACTION_USB_PERMISSION_REQUEST ->
+                // Do not keep asking for permission to access a YubiKey that was unplugged already
+                if (isYubiKeyPlugged(context))
+                    requestPermission(
+                        context,
+                        intent.getParcelableExtra<Parcelable>(
+                            UsbManager.EXTRA_DEVICE
+                        ) as UsbDevice?
+                    )
+            UsbManager.ACTION_USB_DEVICE_ATTACHED ->
+                requestPermission(
+                    context,
                     intent.getParcelableExtra<Parcelable>(
                         UsbManager.EXTRA_DEVICE
                     ) as UsbDevice?
                 )
-            ) {
-                activity.unregisterReceiver(this)
-                unplugReceiver!!.onYubiKeyUnplugged()
-                unplugReceiver = null
-            }
+            UsbManager.ACTION_USB_DEVICE_DETACHED ->
+                if (UsbYubiKey.Type.isDeviceKnown(
+                        intent.getParcelableExtra<Parcelable>(
+                            UsbManager.EXTRA_DEVICE
+                        ) as UsbDevice?
+                    )
+                ) {
+                    context.unregisterReceiver(this)
+                    unplugReceiver!!.onYubiKeyUnplugged()
+                    unplugReceiver = null
+                }
             NfcAdapter.ACTION_TECH_DISCOVERED -> {
                 val isoDep =
                     IsoDep.get(intent.getParcelableExtra<Parcelable>(NfcAdapter.EXTRA_TAG) as Tag?)
                         ?: // Not a YubiKey
                         return
-                if (supportedConnectionMethods and CONNECTION_METHOD_USB != CONNECTION_VOID)
-                    activity.unregisterReceiver(
+                if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_USB != CONNECTION_VOID)
+                    context.unregisterReceiver(
                     this
                 )
                 connectReceiver!!.onYubiKeyConnected(NfcYubiKey(isoDep))
@@ -199,16 +204,15 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onActivityPaused(activity: Activity) {
         if (connectReceiver != null
-            && supportedConnectionMethods and CONNECTION_METHOD_NFC != CONNECTION_VOID)
+            && getSupportedConnectionMethods(activity) and CONNECTION_METHOD_NFC != CONNECTION_VOID)
             NfcAdapter.getDefaultAdapter(
-            this.activity
-        ).disableForegroundDispatch(this.activity)
-        isActivityResumed = false
+            activity
+        ).disableForegroundDispatch(activity)
     }
 
     override fun onActivityStopped(activity: Activity) {
         try {
-            if (connectReceiver != null || unplugReceiver != null) this.activity.unregisterReceiver(
+            if (connectReceiver != null || unplugReceiver != null) activity.unregisterReceiver(
                 this
             )
         } catch (e: Exception) {
@@ -216,14 +220,20 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         }
     }
 
-    private fun requestPermission(device: UsbDevice?) {
-        val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
+    private fun requestPermission(context: Context, device: UsbDevice?) {
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         if (!UsbYubiKey.Type.isDeviceKnown(device)) return
         if (usbManager.hasPermission(device)) {
-            activity.unregisterReceiver(this)
-            if (supportedConnectionMethods and CONNECTION_METHOD_NFC != CONNECTION_VOID
-                && isActivityResumed)
-                NfcAdapter.getDefaultAdapter(activity).disableForegroundDispatch(activity)
+            context.unregisterReceiver(this)
+            if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_NFC != CONNECTION_VOID) {
+                try {
+                    NfcAdapter.getDefaultAdapter(context)
+                        .disableForegroundDispatch(context as Activity)
+                } catch (e: Exception) {
+                    Log.e("ConnectionManager",
+                        "Unable to disable NFC foreground dispatch.", e)
+                }
+            }
             connectReceiver!!.onYubiKeyConnected(UsbYubiKey(device, usbManager.openDevice(device)))
             connectReceiver = null
         } else {
@@ -234,7 +244,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             usbManager.requestPermission(
                 device,
                 PendingIntent.getBroadcast(
-                    activity,
+                    context,
                     0,
                     Intent(ACTION_USB_PERMISSION_REQUEST),
                     flags
@@ -249,27 +259,27 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * @return A byte that may or may not have the [.CONNECTION_METHOD_USB] and
      * [.CONNECTION_METHOD_USB] bits set.
      */
-    val supportedConnectionMethods: Byte
-        get() {
-            val packageManager = activity.packageManager
-            var result = CONNECTION_VOID
-            if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) result =
-                result or CONNECTION_METHOD_USB
-            if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) && NfcAdapter.getDefaultAdapter(
-                    activity
-                ).isEnabled
-            ) result = result or CONNECTION_METHOD_NFC
-            return result
-        }
+    fun getSupportedConnectionMethods(context: Context): Byte {
+        val packageManager = context.packageManager
+        var result = CONNECTION_VOID
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) result =
+            result or CONNECTION_METHOD_USB
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)
+            && NfcAdapter.getDefaultAdapter(context).isEnabled
+        ) result = result or CONNECTION_METHOD_NFC
+        return result
+    }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
     override fun onActivityDestroyed(activity: Activity) {
-        this.activity.application.unregisterActivityLifecycleCallbacks(this)
+        activity.application.unregisterActivityLifecycleCallbacks(this)
     }
 
     companion object {
         private const val ACTION_USB_PERMISSION_REQUEST =
             "android.yubikey.intent.action.USB_PERMISSION_REQUEST"
+
         const val CONNECTION_VOID: Byte = 0
 
         /**

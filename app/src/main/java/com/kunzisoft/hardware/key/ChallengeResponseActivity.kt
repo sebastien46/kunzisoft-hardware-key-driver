@@ -42,6 +42,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
     private var purpose: String? = null
     private var challenge: ByteArray? = null
 
+    private var newIntentReceive: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -60,7 +62,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
         connectionManager = ConnectionManager(this)
         slotPreferenceManager = SlotPreferenceManager(this)
-        when (connectionManager.supportedConnectionMethods) {
+        when (connectionManager.getSupportedConnectionMethods(this)) {
             ConnectionManager.CONNECTION_VOID -> {
                 setText(R.string.set_recovery_key)
             }
@@ -90,6 +92,15 @@ class ChallengeResponseActivity : AppCompatActivity(),
         }
 
         connectionManager.waitForYubiKey(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (newIntentReceive) {
+            connectionManager.onReceive(this, intent)
+            newIntentReceive = false
+        }
     }
 
     private fun selectSlot(slot: Slot) {
@@ -137,7 +148,10 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          this@ChallengeResponseActivity.setResult(RESULT_OK, result)
                          finish()
                      } else {
-                         connectionManager.waitForYubiKeyUnplug(this@ChallengeResponseActivity)
+                         connectionManager.waitForYubiKeyUnplug(
+                             this@ChallengeResponseActivity,
+                             this@ChallengeResponseActivity
+                         )
                          setText(R.string.unplug_yubikey, true)
                      }
                      binding.slotChipGroup.visibility = View.GONE
@@ -162,9 +176,10 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        // This is kind of ugly but Android doesn't leave us any other choice
+        // To call broadcast receiver in onResume
         if (intent != null) {
-            connectionManager.onReceive(this, intent)
+            setIntent(intent)
+            newIntentReceive = true
         }
     }
 
