@@ -27,14 +27,12 @@ import kotlin.experimental.or
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
  */
-internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
+internal class ConnectionManager(private val activity: Activity) : BroadcastReceiver(),
     NfcAdapter.ReaderCallback,
     ActivityLifecycleCallbacks {
 
     private var connectReceiver: YubiKeyConnectReceiver? = null
     private var unplugReceiver: YubiKeyUsbUnplugReceiver? = null
-
-    private lateinit var activity: Activity
 
     /**
      * Receiver interface that is called when a YubiKey was connected.
@@ -71,8 +69,6 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
     override fun onActivityStarted(activity: Activity) {}
 
     override fun onActivityResumed(activity: Activity) {
-        this.activity = activity
-
         // Debug with dummy connection if no supported connection
         if (BuildConfig.DEBUG && getSupportedConnectionMethods(activity) == CONNECTION_VOID) {
             initDummyConnection(activity)
@@ -186,7 +182,7 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
                     )
                 ) {
                     context.unregisterReceiver(this)
-                    unplugReceiver!!.onYubiKeyUnplugged()
+                    unplugReceiver?.onYubiKeyUnplugged()
                     unplugReceiver = null
                 }
         }
@@ -200,7 +196,7 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
             )
 
         activity.runOnUiThread {
-            connectReceiver!!.onYubiKeyConnected(NfcYubiKey(isoDep))
+            connectReceiver?.onYubiKeyConnected(NfcYubiKey(isoDep))
             connectReceiver = null
         }
     }
