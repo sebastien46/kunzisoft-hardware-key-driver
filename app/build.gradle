@@ -8,8 +8,8 @@ android {
         applicationId "com.kunzisoft.hardware.key"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 6
-        versionName "0.1.4"
+        versionCode 7
+        versionName "0.1.5"
     }
     buildTypes {
         release {
