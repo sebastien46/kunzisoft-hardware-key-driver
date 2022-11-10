@@ -28,10 +28,13 @@ import kotlin.experimental.or
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
  */
 internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
+    NfcAdapter.ReaderCallback,
     ActivityLifecycleCallbacks {
 
     private var connectReceiver: YubiKeyConnectReceiver? = null
     private var unplugReceiver: YubiKeyUsbUnplugReceiver? = null
+
+    private lateinit var activity: Activity
 
     /**
      * Receiver interface that is called when a YubiKey was connected.
@@ -68,6 +71,8 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
     override fun onActivityStarted(activity: Activity) {}
 
     override fun onActivityResumed(activity: Activity) {
+        this.activity = activity
+
         // Debug with dummy connection if no supported connection
         if (BuildConfig.DEBUG && getSupportedConnectionMethods(activity) == CONNECTION_VOID) {
             initDummyConnection(activity)
@@ -100,25 +105,22 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
     }
 
     private fun initNFCConnection(activity: Activity) {
-        val filter = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        }
-        NfcAdapter.getDefaultAdapter(activity).enableForegroundDispatch(
+        val options = Bundle()
+
+        // Workaround for some broken Nfc firmware implementations that poll the card too fast
+        options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
+
+        NfcAdapter.getDefaultAdapter(activity).enableReaderMode(
             activity,
-            PendingIntent.getActivity(
-                activity,
-                -1,
-                Intent(activity, activity.javaClass),
-                flags
-            ),
-            arrayOf(filter),
-            arrayOf(
-                arrayOf(
-                    IsoDep::class.java.name
-                )
-            )
+            this,
+            NfcAdapter.FLAG_READER_NFC_A or
+                    NfcAdapter.FLAG_READER_NFC_B or
+                    NfcAdapter.FLAG_READER_NFC_F or
+                    NfcAdapter.FLAG_READER_NFC_V or
+                    NfcAdapter.FLAG_READER_NFC_BARCODE or
+                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
+                    NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+            options
         )
     }
 
@@ -187,27 +189,28 @@ internal class ConnectionManager(activity: Activity) : BroadcastReceiver(),
                     unplugReceiver!!.onYubiKeyUnplugged()
                     unplugReceiver = null
                 }
-            NfcAdapter.ACTION_TECH_DISCOVERED -> {
-                val isoDep =
-                    IsoDep.get(intent.getParcelableExtra<Parcelable>(NfcAdapter.EXTRA_TAG) as Tag?)
-                        ?: // Not a YubiKey
-                        return
-                if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_USB != CONNECTION_VOID)
-                    context.unregisterReceiver(
-                    this
-                )
-                connectReceiver!!.onYubiKeyConnected(NfcYubiKey(isoDep))
-                connectReceiver = null
-            }
+        }
+    }
+
+    override fun onTagDiscovered(tag: Tag?) {
+        val isoDep = IsoDep.get(tag) ?: return
+        if (getSupportedConnectionMethods(activity) and CONNECTION_METHOD_USB != CONNECTION_VOID)
+            activity.unregisterReceiver(
+                this
+            )
+
+        activity.runOnUiThread {
+            connectReceiver!!.onYubiKeyConnected(NfcYubiKey(isoDep))
+            connectReceiver = null
         }
     }
 
     override fun onActivityPaused(activity: Activity) {
         if (connectReceiver != null
-            && getSupportedConnectionMethods(activity) and CONNECTION_METHOD_NFC != CONNECTION_VOID)
-            NfcAdapter.getDefaultAdapter(
-            activity
-        ).disableForegroundDispatch(activity)
+            && getSupportedConnectionMethods(activity) and CONNECTION_METHOD_NFC != CONNECTION_VOID
+        ) {
+            NfcAdapter.getDefaultAdapter(activity).disableReaderMode(activity)
+        }
     }
 
     override fun onActivityStopped(activity: Activity) {
