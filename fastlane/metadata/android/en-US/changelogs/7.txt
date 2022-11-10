@@ -1,0 +1,2 @@
+ * Fix NFC on new device (thx @roihershberg)
+ * Add sound and vibration
