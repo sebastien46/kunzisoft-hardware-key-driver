@@ -24,6 +24,10 @@ import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlin.experimental.and
 import kotlin.experimental.or
 
+internal data class ConnectionMethods(val isUsbSupported: Boolean, val isNfcSupported: Boolean) {
+    val hasAnySupport: Boolean = isUsbSupported || isNfcSupported
+}
+
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
  */
@@ -70,16 +74,14 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onActivityResumed(activity: Activity) {
         // Debug with dummy connection if no supported connection
-        if (BuildConfig.DEBUG && getSupportedConnectionMethods(activity) == CONNECTION_VOID) {
+        if (BuildConfig.DEBUG && !getSupportedConnectionMethods(activity).hasAnySupport) {
             initDummyConnection(activity)
         } else {
             if (connectReceiver != null) {
-                if (getSupportedConnectionMethods(activity)
-                    and CONNECTION_METHOD_USB != CONNECTION_VOID) {
+                if (getSupportedConnectionMethods(activity).isUsbSupported) {
                     initUSBConnection(activity)
                 }
-                if (getSupportedConnectionMethods(activity)
-                    and CONNECTION_METHOD_NFC != CONNECTION_VOID) {
+                if (getSupportedConnectionMethods(activity).isNfcSupported) {
                     initNFCConnection(activity)
                 }
             }
@@ -136,7 +138,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * anymore.
      */
     fun waitForYubiKeyUnplug(context: Context, receiver: YubiKeyUsbUnplugReceiver) {
-        if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_USB == CONNECTION_VOID) {
+        if (!getSupportedConnectionMethods(context).isUsbSupported) {
             receiver.onYubiKeyUnplugged()
             return
         }
@@ -190,7 +192,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onTagDiscovered(tag: Tag?) {
         val isoDep = IsoDep.get(tag) ?: return
-        if (getSupportedConnectionMethods(activity) and CONNECTION_METHOD_USB != CONNECTION_VOID)
+        if (getSupportedConnectionMethods(activity).isUsbSupported)
             activity.unregisterReceiver(
                 this
             )
@@ -202,9 +204,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     override fun onActivityPaused(activity: Activity) {
-        if (connectReceiver != null
-            && getSupportedConnectionMethods(activity) and CONNECTION_METHOD_NFC != CONNECTION_VOID
-        ) {
+        if (connectReceiver != null && getSupportedConnectionMethods(activity).isNfcSupported) {
             NfcAdapter.getDefaultAdapter(activity).disableReaderMode(activity)
         }
     }
@@ -224,7 +224,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         if (!UsbYubiKey.Type.isDeviceKnown(device)) return
         if (usbManager.hasPermission(device)) {
             context.unregisterReceiver(this)
-            if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_NFC != CONNECTION_VOID) {
+            if (getSupportedConnectionMethods(context).isNfcSupported) {
                 try {
                     NfcAdapter.getDefaultAdapter(context)
                         .disableForegroundDispatch(context as Activity)
@@ -258,15 +258,20 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * @return A byte that may or may not have the [.CONNECTION_METHOD_USB] and
      * [.CONNECTION_METHOD_USB] bits set.
      */
-    fun getSupportedConnectionMethods(context: Context): Byte {
+    fun getSupportedConnectionMethods(context: Context): ConnectionMethods {
         val packageManager = context.packageManager
-        var result = CONNECTION_VOID
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) result =
-            result or CONNECTION_METHOD_USB
+        var isUsbSupported: Boolean = false
+        var isNfcSupported: Boolean = false
+
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) {
+            isUsbSupported = true
+        }
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)
-            && NfcAdapter.getDefaultAdapter(context).isEnabled
-        ) result = result or CONNECTION_METHOD_NFC
-        return result
+            && NfcAdapter.getDefaultAdapter(context).isEnabled) {
+            isNfcSupported = true
+        }
+
+        return ConnectionMethods(isUsbSupported, isNfcSupported)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
@@ -278,17 +283,5 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     companion object {
         private const val ACTION_USB_PERMISSION_REQUEST =
             "android.yubikey.intent.action.USB_PERMISSION_REQUEST"
-
-        const val CONNECTION_VOID: Byte = 0
-
-        /**
-         * Flag used to indicate that support for USB host mode is present on the Android device.
-         */
-        const val CONNECTION_METHOD_USB: Byte = 1
-
-        /**
-         * Flag used to indicate that support for NFC is present on the Android device.
-         */
-        const val CONNECTION_METHOD_NFC: Byte = 2
     }
 }
