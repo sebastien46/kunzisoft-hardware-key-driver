@@ -37,6 +37,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     private var connectReceiver: YubiKeyConnectReceiver? = null
     private var unplugReceiver: YubiKeyUsbUnplugReceiver? = null
+    private var usbPermissionDeniedReceiver: UsbPermissionDeniedReceiver? = null
+
+    private var requestingUsbPermission: Boolean = false
 
     /**
      * Receiver interface that is called when a YubiKey was connected.
@@ -59,6 +62,17 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
          * Called when a YubiKey connected via USB was unplugged.
          */
         fun onYubiKeyUnplugged()
+    }
+
+    /**
+     * Receiver interface that is called when the user denied the permission for accessing the
+     * YubiKey via USB.
+     */
+    internal interface UsbPermissionDeniedReceiver {
+        /**
+         * Called when the user denied the permission for accessing the YubiKey via USB.
+         */
+        fun onUsbPermissionDenied()
     }
 
     /**
@@ -98,8 +112,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         activity.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED))
 
         val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
-        for (device in usbManager.deviceList.values)
-            requestPermission(activity, device)
+        for (device in usbManager.deviceList.values) {
+            handleUsbDevice(activity, device)
+        }
     }
 
     private fun initNFCConnection(activity: Activity) {
@@ -150,6 +165,10 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         context.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
     }
 
+    fun registerUsbPermissionDeniedReceiver(receiver: UsbPermissionDeniedReceiver) {
+        usbPermissionDeniedReceiver = receiver
+    }
+
     private fun isYubiKeyPlugged(context: Context): Boolean {
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         for (device in usbManager.deviceList.values) {
@@ -160,18 +179,26 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            ACTION_USB_PERMISSION_REQUEST ->
+            ACTION_USB_PERMISSION_REQUEST -> {
+                requestingUsbPermission = false
                 // Do not keep asking for permission to access a YubiKey that was unplugged already
                 if (isYubiKeyPlugged(context)) {
                     (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
                         ?.let { device ->
-                            requestPermission(context, device)
+                            val permissionGranted =
+                                intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                            if (permissionGranted) {
+                                handleUsbDevice(context, device)
+                            } else {
+                                usbPermissionDeniedReceiver?.onUsbPermissionDenied()
+                            }
                         }
                 }
+            }
             UsbManager.ACTION_USB_DEVICE_ATTACHED ->
                 (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
                     ?.let { device ->
-                        requestPermission(context, device)
+                        handleUsbDevice(context, device)
                     }
             UsbManager.ACTION_USB_DEVICE_DETACHED ->
                 (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
@@ -214,9 +241,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         }
     }
 
-    private fun requestPermission(context: Context, device: UsbDevice) {
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+    private fun handleUsbDevice(context: Context, device: UsbDevice) {
         if (!UsbYubiKey.Type.isDeviceKnown(device)) return
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         if (usbManager.hasPermission(device)) {
             context.unregisterReceiver(this)
             if (getSupportedConnectionMethods(context).isNfcSupported) {
@@ -228,21 +255,29 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             }
             connectReceiver!!.onYubiKeyConnected(UsbYubiKey(device, usbManager.openDevice(device)))
             connectReceiver = null
-        } else {
-            var flags = PendingIntent.FLAG_UPDATE_CURRENT
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            }
-            usbManager.requestPermission(
-                device,
-                PendingIntent.getBroadcast(
-                    context,
-                    0,
-                    Intent(ACTION_USB_PERMISSION_REQUEST),
-                    flags
-                )
-            )
+        } else if (!requestingUsbPermission) {
+            requestingUsbPermission = true
+            requestPermission(context, device)
         }
+    }
+
+    private fun requestPermission(context: Context, device: UsbDevice) {
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        usbManager.requestPermission(
+            device,
+            PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(ACTION_USB_PERMISSION_REQUEST),
+                flags
+            )
+        )
     }
 
     /**
