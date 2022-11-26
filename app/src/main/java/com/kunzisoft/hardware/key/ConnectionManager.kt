@@ -226,11 +226,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             context.unregisterReceiver(this)
             if (getSupportedConnectionMethods(context) and CONNECTION_METHOD_NFC != CONNECTION_VOID) {
                 try {
-                    NfcAdapter.getDefaultAdapter(context)
-                        .disableForegroundDispatch(context as Activity)
+                    NfcAdapter.getDefaultAdapter(context).disableReaderMode(context as Activity)
                 } catch (e: Exception) {
-                    Log.e("ConnectionManager",
-                        "Unable to disable NFC foreground dispatch.", e)
+                    Log.e("ConnectionManager", "Unable to disable NFC reader mode.", e)
                 }
             }
             connectReceiver!!.onYubiKeyConnected(UsbYubiKey(device, usbManager.openDevice(device)))
