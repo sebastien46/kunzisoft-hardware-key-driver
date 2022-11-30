@@ -160,31 +160,26 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         when (intent.action) {
             ACTION_USB_PERMISSION_REQUEST ->
                 // Do not keep asking for permission to access a YubiKey that was unplugged already
-                if (isYubiKeyPlugged(context))
-                    requestPermission(
-                        context,
-                        intent.getParcelableExtra<Parcelable>(
-                            UsbManager.EXTRA_DEVICE
-                        ) as UsbDevice?
-                    )
-            UsbManager.ACTION_USB_DEVICE_ATTACHED ->
-                requestPermission(
-                    context,
-                    intent.getParcelableExtra<Parcelable>(
-                        UsbManager.EXTRA_DEVICE
-                    ) as UsbDevice?
-                )
-            UsbManager.ACTION_USB_DEVICE_DETACHED ->
-                if (UsbYubiKey.Type.isDeviceKnown(
-                        intent.getParcelableExtra<Parcelable>(
-                            UsbManager.EXTRA_DEVICE
-                        ) as UsbDevice?
-                    )
-                ) {
-                    context.unregisterReceiver(this)
-                    unplugReceiver?.onYubiKeyUnplugged()
-                    unplugReceiver = null
+                if (isYubiKeyPlugged(context)) {
+                    (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
+                        ?.let { device ->
+                            requestPermission(context, device)
+                        }
                 }
+            UsbManager.ACTION_USB_DEVICE_ATTACHED ->
+                (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
+                    ?.let { device ->
+                        requestPermission(context, device)
+                    }
+            UsbManager.ACTION_USB_DEVICE_DETACHED ->
+                (intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as? UsbDevice)
+                    ?.let { device ->
+                        if (UsbYubiKey.Type.isDeviceKnown(device)) {
+                            context.unregisterReceiver(this)
+                            unplugReceiver?.onYubiKeyUnplugged()
+                            unplugReceiver = null
+                        }
+                    }
         }
     }
 
@@ -219,7 +214,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         }
     }
 
-    private fun requestPermission(context: Context, device: UsbDevice?) {
+    private fun requestPermission(context: Context, device: UsbDevice) {
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         if (!UsbYubiKey.Type.isDeviceKnown(device)) return
         if (usbManager.hasPermission(device)) {
