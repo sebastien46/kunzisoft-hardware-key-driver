@@ -5,6 +5,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.kunzisoft.hardware.yubikey.Slot;
 import com.kunzisoft.hardware.yubikey.YubiKeyException;
@@ -116,7 +117,7 @@ public class UsbYubiKey implements YubiKey {
 			return this.version;
 		}
 
-		public static Type lookupDeviceType(final UsbDevice device) {
+		public static Type lookupDeviceType(@NonNull final UsbDevice device) {
 			for (final Type type : Type.values()) {
 				if (type.getVendorID() == device.getVendorId() &&
 						(type.getProductID() == device.getProductId() || type.getProductID() == -0x1)) {
@@ -127,7 +128,9 @@ public class UsbYubiKey implements YubiKey {
 			return Type.UNKNOWN;
 		}
 
-		public static boolean isDeviceKnown(final UsbDevice device) {
+		public static boolean isDeviceKnown(@Nullable final UsbDevice device) {
+			if (device == null)
+				return false;
 			return lookupDeviceType(device) != UNKNOWN;
 		}
 	}
