@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kunzisoft.hardware.key.databinding.ActivityChallengeBinding
 import com.kunzisoft.hardware.yubikey.Slot
+import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
@@ -168,7 +169,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                  withContext(Dispatchers.Main) {
                      val response = asyncResult.await()
                      if (response != null) {
-                         notifySuccess()
+                         if (yubiKey is NfcYubiKey) {
+                             notifySuccess()
+                         }
                          slotPreferenceManager.setPreferredSlot(
                              purpose,
                              selectedSlot
