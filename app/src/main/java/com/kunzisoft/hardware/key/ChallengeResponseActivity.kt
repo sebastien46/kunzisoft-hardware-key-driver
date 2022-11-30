@@ -92,24 +92,18 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
         connectionManager = ConnectionManager(this)
         slotPreferenceManager = SlotPreferenceManager(this)
-        when (connectionManager.getSupportedConnectionMethods(this)) {
-            ConnectionManager.CONNECTION_VOID -> {
-                setText(R.string.set_recovery_key)
-            }
-            ConnectionManager.CONNECTION_METHOD_USB or ConnectionManager.CONNECTION_METHOD_NFC -> {
-                setText(R.string.attach_or_swipe_yubikey)
-            }
-            ConnectionManager.CONNECTION_METHOD_USB -> {
-                setText(R.string.attach_yubikey)
-            }
-            ConnectionManager.CONNECTION_METHOD_NFC -> {
-                setText(R.string.swipe_yubikey)
-            }
-            else -> {
-                setText(R.string.no_supported_connection_method, true)
-                return
-            }
+        val connectionMethods = connectionManager.getSupportedConnectionMethods(this)
+        if (connectionMethods.isUsbSupported && connectionMethods.isNfcSupported) {
+            setText(R.string.attach_or_swipe_yubikey)
+        } else if (connectionMethods.isUsbSupported) {
+            setText(R.string.attach_yubikey)
+        } else if (connectionMethods.isNfcSupported) {
+            setText(R.string.swipe_yubikey)
+        } else {
+            setText(R.string.no_supported_connection_method, true)
+            return
         }
+
         selectedSlot = slotPreferenceManager.getPreferredSlot(purpose)
         selectSlot(selectedSlot)
         binding.slot1.setOnCheckedChangeListener { _, b ->
