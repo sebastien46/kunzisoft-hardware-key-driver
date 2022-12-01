@@ -24,9 +24,10 @@ import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlin.experimental.and
 import kotlin.experimental.or
 
-internal data class ConnectionMethods(val isUsbSupported: Boolean, val isNfcSupported: Boolean) {
-    val hasAnySupport: Boolean = isUsbSupported || isNfcSupported
-}
+internal data class ConnectionMethods(val isUsbSupported: Boolean, val isNfcSupported: Boolean)
+
+internal val ConnectionMethods.hasAnySupport: Boolean
+    get() = isUsbSupported || isNfcSupported
 
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
