@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kunzisoft.hardware.key.databinding.ActivityChallengeBinding
 import com.kunzisoft.hardware.yubikey.Slot
+import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
@@ -37,7 +38,8 @@ import kotlin.experimental.or
  */
 class ChallengeResponseActivity : AppCompatActivity(),
     ConnectionManager.YubiKeyConnectReceiver,
-    ConnectionManager.YubiKeyUsbUnplugReceiver {
+    ConnectionManager.YubiKeyUsbUnplugReceiver,
+    ConnectionManager.UsbPermissionDeniedReceiver {
 
     private lateinit var binding: ActivityChallengeBinding
 
@@ -91,24 +93,18 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
         connectionManager = ConnectionManager(this)
         slotPreferenceManager = SlotPreferenceManager(this)
-        when (connectionManager.getSupportedConnectionMethods(this)) {
-            ConnectionManager.CONNECTION_VOID -> {
-                setText(R.string.set_recovery_key)
-            }
-            ConnectionManager.CONNECTION_METHOD_USB or ConnectionManager.CONNECTION_METHOD_NFC -> {
-                setText(R.string.attach_or_swipe_yubikey)
-            }
-            ConnectionManager.CONNECTION_METHOD_USB -> {
-                setText(R.string.attach_yubikey)
-            }
-            ConnectionManager.CONNECTION_METHOD_NFC -> {
-                setText(R.string.swipe_yubikey)
-            }
-            else -> {
-                setText(R.string.no_supported_connection_method, true)
-                return
-            }
+        val connectionMethods = connectionManager.getSupportedConnectionMethods(this)
+        if (connectionMethods.isUsbSupported && connectionMethods.isNfcSupported) {
+            setText(R.string.attach_or_swipe_yubikey)
+        } else if (connectionMethods.isUsbSupported) {
+            setText(R.string.attach_yubikey)
+        } else if (connectionMethods.isNfcSupported) {
+            setText(R.string.swipe_yubikey)
+        } else {
+            setText(R.string.no_supported_connection_method, true)
+            return
         }
+
         selectedSlot = slotPreferenceManager.getPreferredSlot(purpose)
         selectSlot(selectedSlot)
         binding.slot1.setOnCheckedChangeListener { _, b ->
@@ -121,6 +117,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
         }
 
         connectionManager.waitForYubiKey(this)
+        connectionManager.registerUsbPermissionDeniedReceiver(this)
     }
 
     override fun onResume() {
@@ -168,7 +165,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                  withContext(Dispatchers.Main) {
                      val response = asyncResult.await()
                      if (response != null) {
-                         notifySuccess()
+                         if (yubiKey is NfcYubiKey) {
+                             notifySuccess()
+                         }
                          slotPreferenceManager.setPreferredSlot(
                              purpose,
                              selectedSlot
@@ -192,6 +191,14 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     override fun onYubiKeyUnplugged() {
         recreate()
+    }
+
+    override fun onUsbPermissionDenied() {
+        connectionManager.waitForYubiKeyUnplug(
+            this@ChallengeResponseActivity,
+            this@ChallengeResponseActivity
+        )
+        setText(R.string.usb_permission_denied, true)
     }
 
     private fun notifySuccess() {

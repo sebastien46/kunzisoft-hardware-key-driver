@@ -24,6 +24,7 @@
     <string name="press_button">Press the button on your YubiKey.</string>
     <string name="unplug_yubikey">An error has occurred. Unplug your YubiKey.</string>
     <string name="invalid_challenge">An invalid challenge was passed. Contact the support of the app you are trying to use with.</string>
+    <string name="usb_permission_denied">USB permission denied. Unplug your YubiKey.</string>
 
     <string name="hardware_key">Hardware Key</string>
     <string name="solokey_pref" translatable="false">solokey_pref</string>
