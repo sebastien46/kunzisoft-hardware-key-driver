@@ -21,8 +21,6 @@ import com.kunzisoft.hardware.yubikey.challenge.DummyYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
-import kotlin.experimental.and
-import kotlin.experimental.or
 
 internal data class ConnectionMethods(val isUsbSupported: Boolean, val isNfcSupported: Boolean)
 
@@ -41,6 +39,8 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     private var usbPermissionDeniedReceiver: UsbPermissionDeniedReceiver? = null
 
     private var requestingUsbPermission: Boolean = false
+
+    private val connectionMethods = getSupportedConnectionMethods(activity)
 
     /**
      * Receiver interface that is called when a YubiKey was connected.
@@ -89,14 +89,14 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onActivityResumed(activity: Activity) {
         // Debug with dummy connection if no supported connection
-        if (BuildConfig.DEBUG && !getSupportedConnectionMethods(activity).hasAnySupport) {
+        if (BuildConfig.DEBUG && !connectionMethods.hasAnySupport) {
             initDummyConnection(activity)
         } else {
             if (connectReceiver != null) {
-                if (getSupportedConnectionMethods(activity).isUsbSupported) {
+                if (connectionMethods.isUsbSupported) {
                     initUSBConnection(activity)
                 }
-                if (getSupportedConnectionMethods(activity).isNfcSupported) {
+                if (connectionMethods.isNfcSupported) {
                     initNFCConnection(activity)
                 }
             }
@@ -154,7 +154,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * anymore.
      */
     fun waitForYubiKeyUnplug(context: Context, receiver: YubiKeyUsbUnplugReceiver) {
-        if (!getSupportedConnectionMethods(context).isUsbSupported) {
+        if (!connectionMethods.isUsbSupported) {
             receiver.onYubiKeyUnplugged()
             return
         }
@@ -215,7 +215,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onTagDiscovered(tag: Tag?) {
         val isoDep = IsoDep.get(tag) ?: return
-        if (getSupportedConnectionMethods(activity).isUsbSupported)
+        if (connectionMethods.isUsbSupported)
             activity.unregisterReceiver(
                 this
             )
@@ -227,7 +227,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     override fun onActivityPaused(activity: Activity) {
-        if (connectReceiver != null && getSupportedConnectionMethods(activity).isNfcSupported) {
+        if (connectReceiver != null && connectionMethods.isNfcSupported) {
             NfcAdapter.getDefaultAdapter(activity).disableReaderMode(activity)
         }
     }
@@ -247,7 +247,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         if (usbManager.hasPermission(device)) {
             context.unregisterReceiver(this)
-            if (getSupportedConnectionMethods(context).isNfcSupported) {
+            if (connectionMethods.isNfcSupported) {
                 try {
                     NfcAdapter.getDefaultAdapter(context).disableReaderMode(context as Activity)
                 } catch (e: Exception) {
