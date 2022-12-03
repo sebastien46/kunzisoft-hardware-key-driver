@@ -224,12 +224,12 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     private fun setText(@StringRes stringRes: Int,
                         error: Boolean = false) {
+        binding.info.setText(stringRes)
         if (error) {
             binding.waiting.visibility = View.INVISIBLE
             binding.failure.visibility = View.VISIBLE
             hideSlotSelection()
         }
-        binding.info.setText(stringRes)
     }
 
     override fun onNewIntent(intent: Intent?) {
