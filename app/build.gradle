@@ -8,8 +8,8 @@ android {
         applicationId "com.kunzisoft.hardware.key"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 8
-        versionName "0.1.6"
+        versionCode 9
+        versionName "0.1.7"
     }
     buildTypes {
         release {
@@ -33,14 +33,14 @@ android {
 dependencies {
     implementation project(path: ':yubikeydriver')
     implementation 'androidx.preference:preference-ktx:1.2.0'
-    def nav_version = "2.5.2"
+    def nav_version = "2.5.3"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation 'androidx.fragment:fragment-ktx:1.5.2'
+    implementation 'androidx.fragment:fragment-ktx:1.5.4'
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'com.google.android.material:material:1.7.0'
 
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
