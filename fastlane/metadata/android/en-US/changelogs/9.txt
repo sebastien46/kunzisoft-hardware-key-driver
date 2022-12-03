@@ -1,0 +1,4 @@
+ * Manually retry when an error occurs
+ * Better error message
+ * Fix UI
+ * Manually select sound or vibration in settings

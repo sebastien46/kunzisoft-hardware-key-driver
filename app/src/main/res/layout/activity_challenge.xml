@@ -10,39 +10,22 @@
     android:layout_gravity="center"
     tools:context="com.kunzisoft.hardware.key.ChallengeResponseActivity">
 
-    <LinearLayout
-        android:id="@+id/statusContainer"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/info"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:gravity="center"
-        android:orientation="vertical"
+        android:layout_marginTop="48dp"
+        android:padding="24dp"
+        android:minHeight="96dp"
+        android:text="@string/attach_yubikey"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/yubikeyImage"
-        android:layout_marginTop="48dp"
-        tools:ignore="UseCompoundDrawables">
-
-        <ImageView
-            android:id="@+id/failure"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_error_outline_24"
-            android:visibility="gone"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="6dp"
-            android:gravity="center"
-            android:text="@string/attach_yubikey"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/yubikeyImage"
@@ -52,7 +35,7 @@
         android:adjustViewBounds="true"
         android:contentDescription="@string/hardware_key"
         android:src="@drawable/img_yubikey"
-        app:layout_constraintTop_toBottomOf="@+id/statusContainer"
+        app:layout_constraintTop_toBottomOf="@+id/info"
         app:layout_constraintBottom_toTopOf="@+id/waiting"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -92,5 +75,29 @@
             android:text="@string/slot_2" />
 
     </com.google.android.material.chip.ChipGroup>
+
+    <ImageView
+        android:id="@+id/failure"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_error_outline_24"
+        app:layout_constraintBottom_toBottomOf="@+id/slotChipGroup"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:visibility="gone"
+        app:tint="?attr/colorAccent"
+        tools:ignore="ContentDescription" />
+
+    <Button
+        android:id="@+id/retry_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/retry"
+        android:drawableEnd="@drawable/ic_error_outline_24"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/slotChipGroup"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,13 +1,8 @@
 package com.kunzisoft.hardware.key
 
-import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.AudioManager
-import android.media.RingtoneManager
-import android.media.SoundPool
-import android.net.Uri
-import android.os.*
+import android.nfc.TagLostException
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.Window
@@ -20,7 +15,6 @@ import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
-import kotlin.experimental.or
 
 
 /**
@@ -52,10 +46,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     private var newIntentReceive: Intent? = null
 
-    private lateinit var audioManager: AudioManager
-    private lateinit var vibrator: Vibrator
-    private lateinit var soundPool: SoundPool
-    private var endSoundID: Int = 0
+    private lateinit var keySoundManager: KeySoundManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,23 +64,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
         purpose = this.intent.getStringExtra(SLOT_TAG)
 
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager =
-                getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibratorManager.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-        soundPool = SoundPool.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
-                    .build()
-            )
-            .build()
-        endSoundID = soundPool.load(this, R.raw.end, 1)
+        keySoundManager = KeySoundManager(this)
 
         connectionManager = ConnectionManager(this)
         slotPreferenceManager = SlotPreferenceManager(this)
@@ -114,6 +89,10 @@ class ChallengeResponseActivity : AppCompatActivity(),
         binding.slot2.setOnCheckedChangeListener { _, b ->
             if (b)
                 selectSlot(Slot.CHALLENGE_HMAC_2)
+        }
+
+        binding.retryButton.setOnClickListener {
+            recreate()
         }
 
         connectionManager.waitForYubiKey(this)
@@ -147,7 +126,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
     override fun onYubiKeyConnected(yubiKey: YubiKey) {
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
-        binding.slotChipGroup.visibility = View.GONE
+        hideSlotSelection()
 
          lifecycleScope.launch {
              withContext(Dispatchers.IO) {
@@ -158,7 +137,24 @@ class ChallengeResponseActivity : AppCompatActivity(),
                              challenge!!
                          )
                      } catch (e: Exception) {
-                         Log.e(TAG, "Error during challenge-response request", e)
+                         withContext(Dispatchers.Main) {
+                             Log.e(TAG, "Error during challenge-response request", e)
+                             if (yubiKey is UsbYubiKey) {
+                                 connectionManager.waitForYubiKeyUnplug(
+                                     this@ChallengeResponseActivity,
+                                     this@ChallengeResponseActivity
+                                 )
+                                 setText(R.string.error_unplug_yubikey, true)
+                             }
+                             if (yubiKey is NfcYubiKey) {
+                                 if (e.cause is TagLostException) {
+                                     setText(R.string.error_yubikey_slowly, true)
+                                 } else {
+                                     setText(R.string.error_yubikey_configure, true)
+                                 }
+                                 binding.retryButton.visibility = View.VISIBLE
+                             }
+                         }
                          null
                      }
                  }
@@ -166,7 +162,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
                      val response = asyncResult.await()
                      if (response != null) {
                          if (yubiKey is NfcYubiKey) {
-                             notifySuccess()
+                             keySoundManager.notifySuccess()
                          }
                          slotPreferenceManager.setPreferredSlot(
                              purpose,
@@ -176,14 +172,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          result.putExtra(RESPONSE_TAG, response)
                          this@ChallengeResponseActivity.setResult(RESULT_OK, result)
                          finish()
-                     } else {
-                         connectionManager.waitForYubiKeyUnplug(
-                             this@ChallengeResponseActivity,
-                             this@ChallengeResponseActivity
-                         )
-                         setText(R.string.unplug_yubikey, true)
                      }
-                     binding.slotChipGroup.visibility = View.GONE
+                     hideSlotSelection()
                  }
              }
         }
@@ -201,31 +191,19 @@ class ChallengeResponseActivity : AppCompatActivity(),
         setText(R.string.usb_permission_denied, true)
     }
 
-    private fun notifySuccess() {
-        when (audioManager.ringerMode) {
-            AudioManager.RINGER_MODE_NORMAL -> soundPool.play(endSoundID, 1f, 1f, 0, 0, 1f)
-            AudioManager.RINGER_MODE_VIBRATE -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        200,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(200)
-            }
-        }
+
+    private fun hideSlotSelection() {
+        binding.slotChipGroup.visibility = View.INVISIBLE
     }
 
     private fun setText(@StringRes stringRes: Int,
                         error: Boolean = false) {
-        if (error) {
-            binding.waiting.visibility = View.GONE
-            binding.failure.visibility = View.VISIBLE
-            binding.slotChipGroup.visibility = View.GONE
-        }
         binding.info.setText(stringRes)
+        if (error) {
+            binding.waiting.visibility = View.INVISIBLE
+            binding.failure.visibility = View.VISIBLE
+            hideSlotSelection()
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
