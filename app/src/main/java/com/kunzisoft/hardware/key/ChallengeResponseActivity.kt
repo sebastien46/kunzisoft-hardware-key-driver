@@ -1,6 +1,7 @@
 package com.kunzisoft.hardware.key
 
 import android.content.Intent
+import android.nfc.TagLostException
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -136,7 +137,24 @@ class ChallengeResponseActivity : AppCompatActivity(),
                              challenge!!
                          )
                      } catch (e: Exception) {
-                         Log.e(TAG, "Error during challenge-response request", e)
+                         withContext(Dispatchers.Main) {
+                             Log.e(TAG, "Error during challenge-response request", e)
+                             if (yubiKey is UsbYubiKey) {
+                                 connectionManager.waitForYubiKeyUnplug(
+                                     this@ChallengeResponseActivity,
+                                     this@ChallengeResponseActivity
+                                 )
+                                 setText(R.string.error_unplug_yubikey, true)
+                             }
+                             if (yubiKey is NfcYubiKey) {
+                                 if (e.cause is TagLostException) {
+                                     setText(R.string.error_yubikey_slowly, true)
+                                 } else {
+                                     setText(R.string.error_yubikey_configure, true)
+                                 }
+                                 binding.retryButton.visibility = View.VISIBLE
+                             }
+                         }
                          null
                      }
                  }
@@ -154,18 +172,6 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          result.putExtra(RESPONSE_TAG, response)
                          this@ChallengeResponseActivity.setResult(RESULT_OK, result)
                          finish()
-                     } else {
-                         if (yubiKey is UsbYubiKey) {
-                             connectionManager.waitForYubiKeyUnplug(
-                                 this@ChallengeResponseActivity,
-                                 this@ChallengeResponseActivity
-                             )
-                             setText(R.string.error_unplug_yubikey, true)
-                         }
-                         if (yubiKey is NfcYubiKey) {
-                             setText(R.string.error_yubikey_slowly, true)
-                             binding.retryButton.visibility = View.VISIBLE
-                         }
                      }
                      hideSlotSelection()
                  }
