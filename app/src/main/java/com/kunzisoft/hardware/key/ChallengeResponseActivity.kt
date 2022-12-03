@@ -147,7 +147,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
     override fun onYubiKeyConnected(yubiKey: YubiKey) {
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
-        binding.slotChipGroup.visibility = View.GONE
+        hideSlotSelection()
 
          lifecycleScope.launch {
              withContext(Dispatchers.IO) {
@@ -183,7 +183,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          )
                          setText(R.string.unplug_yubikey, true)
                      }
-                     binding.slotChipGroup.visibility = View.GONE
+                     hideSlotSelection()
                  }
              }
         }
@@ -218,12 +218,16 @@ class ChallengeResponseActivity : AppCompatActivity(),
         }
     }
 
+    private fun hideSlotSelection() {
+        binding.slotChipGroup.visibility = View.INVISIBLE
+    }
+
     private fun setText(@StringRes stringRes: Int,
                         error: Boolean = false) {
         if (error) {
-            binding.waiting.visibility = View.GONE
+            binding.waiting.visibility = View.INVISIBLE
             binding.failure.visibility = View.VISIBLE
-            binding.slotChipGroup.visibility = View.GONE
+            hideSlotSelection()
         }
         binding.info.setText(stringRes)
     }
