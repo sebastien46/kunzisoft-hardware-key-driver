@@ -46,4 +46,17 @@
     <string name="recovery_key">Recovery Key</string>
     <string name="recovery_key_description">Recovery key to generate a proper virtual challenge-response</string>
     <string name="in_development">(In development)</string>
+
+    <string name="default_feedback_pref" translatable="false">default_feedback_pref</string>
+    <string name="default_feedback">Default feedback</string>
+    <string name="default_feedback_summary">Let the system choose to emit a sound or a vibration</string>
+    <bool name="default_feedback_default" translatable="false">true</bool>
+    <string name="sound_pref" translatable="false">sound_pref</string>
+    <string name="sound">Sound</string>
+    <string name="sound_summary">Emit a sound when the hardware key is correctly read</string>
+    <bool name="sound_default" translatable="false">true</bool>
+    <string name="vibration_pref" translatable="false">vibration_pref</string>
+    <string name="vibration">Vibration</string>
+    <string name="vibration_summary">Perform a vibration when the hardware key is correctly read</string>
+    <bool name="vibration_default" translatable="false">true</bool>
 </resources>

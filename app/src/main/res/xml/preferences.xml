@@ -16,4 +16,31 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:key="feedback_key_pref"
+        app:title="@string/feedback">
+
+        <SwitchPreference
+            app:key="@string/default_feedback_pref"
+            app:disableDependentsState="true"
+            app:title="@string/default_feedback"
+            app:summary="@string/default_feedback_summary"
+            app:defaultValue="@bool/default_feedback_default"/>
+
+        <SwitchPreference
+            app:key="@string/sound_pref"
+            app:dependency="@string/default_feedback_pref"
+            app:title="@string/sound"
+            app:summary="@string/sound_summary"
+            app:defaultValue="@bool/sound_default"/>
+
+        <SwitchPreference
+            app:key="@string/vibration_pref"
+            app:dependency="@string/default_feedback_pref"
+            app:title="@string/vibration"
+            app:summary="@string/vibration_summary"
+            app:defaultValue="@bool/vibration_default"/>
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -1,7 +1,7 @@
 package com.kunzisoft.hardware.key
 
 import android.content.Context
-import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 import com.kunzisoft.hardware.yubikey.Slot
 
 /**
@@ -9,7 +9,7 @@ import com.kunzisoft.hardware.yubikey.Slot
  * uniquely identifies the purpose of the requested action.
  */
 internal class SlotPreferenceManager(context: Context) {
-    private val slotPreferences: SharedPreferences
+    private val slotPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     /**
      * Gets the preferred slot for a given unique purpose identifier.
@@ -69,14 +69,6 @@ internal class SlotPreferenceManager(context: Context) {
     }
 
     companion object {
-        private const val SLOT_PREFERENCES_FILE_NAME = "slot_preferences"
         private const val DEFAULT_IDENTIFIER = "default"
-    }
-
-    init {
-        slotPreferences = context.getSharedPreferences(
-            context.applicationInfo.packageName + "_" + SLOT_PREFERENCES_FILE_NAME,
-            Context.MODE_PRIVATE
-        )
     }
 }
