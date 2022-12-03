@@ -38,7 +38,8 @@ import kotlin.experimental.or
  */
 class ChallengeResponseActivity : AppCompatActivity(),
     ConnectionManager.YubiKeyConnectReceiver,
-    ConnectionManager.YubiKeyUsbUnplugReceiver {
+    ConnectionManager.YubiKeyUsbUnplugReceiver,
+    ConnectionManager.UsbPermissionDeniedReceiver {
 
     private lateinit var binding: ActivityChallengeBinding
 
@@ -116,6 +117,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
         }
 
         connectionManager.waitForYubiKey(this)
+        connectionManager.registerUsbPermissionDeniedReceiver(this)
     }
 
     override fun onResume() {
@@ -189,6 +191,14 @@ class ChallengeResponseActivity : AppCompatActivity(),
 
     override fun onYubiKeyUnplugged() {
         recreate()
+    }
+
+    override fun onUsbPermissionDenied() {
+        connectionManager.waitForYubiKeyUnplug(
+            this@ChallengeResponseActivity,
+            this@ChallengeResponseActivity
+        )
+        setText(R.string.usb_permission_denied, true)
     }
 
     private fun notifySuccess() {
