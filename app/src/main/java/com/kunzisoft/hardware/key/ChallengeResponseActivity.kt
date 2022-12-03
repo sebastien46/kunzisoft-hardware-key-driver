@@ -4,9 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.RingtoneManager
 import android.media.SoundPool
-import android.net.Uri
 import android.os.*
 import android.util.Log
 import android.view.View
@@ -20,7 +18,6 @@ import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
-import kotlin.experimental.or
 
 
 /**
@@ -116,6 +113,10 @@ class ChallengeResponseActivity : AppCompatActivity(),
                 selectSlot(Slot.CHALLENGE_HMAC_2)
         }
 
+        binding.retryButton.setOnClickListener {
+            recreate()
+        }
+
         connectionManager.waitForYubiKey(this)
         connectionManager.registerUsbPermissionDeniedReceiver(this)
     }
@@ -177,11 +178,17 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          this@ChallengeResponseActivity.setResult(RESULT_OK, result)
                          finish()
                      } else {
-                         connectionManager.waitForYubiKeyUnplug(
-                             this@ChallengeResponseActivity,
-                             this@ChallengeResponseActivity
-                         )
-                         setText(R.string.unplug_yubikey, true)
+                         if (yubiKey is UsbYubiKey) {
+                             connectionManager.waitForYubiKeyUnplug(
+                                 this@ChallengeResponseActivity,
+                                 this@ChallengeResponseActivity
+                             )
+                             setText(R.string.error_unplug_yubikey, true)
+                         }
+                         if (yubiKey is NfcYubiKey) {
+                             setText(R.string.error_yubikey_slowly, true)
+                             binding.retryButton.visibility = View.VISIBLE
+                         }
                      }
                      hideSlotSelection()
                  }
