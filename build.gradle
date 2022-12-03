@@ -1,5 +1,7 @@
 buildscript {
     ext.kotlin_version = '1.7.20'
+    ext.hilt_version = '2.44.2'
+    ext.molecule_version = '0.6.1'
     repositories {
         mavenCentral()
         google()
@@ -7,6 +9,8 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:7.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
+        classpath "app.cash.molecule:molecule-gradle-plugin:$molecule_version"
     }
 }
 

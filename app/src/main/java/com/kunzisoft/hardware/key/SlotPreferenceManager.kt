@@ -3,12 +3,18 @@ package com.kunzisoft.hardware.key
 import android.content.Context
 import androidx.preference.PreferenceManager
 import com.kunzisoft.hardware.yubikey.Slot
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Manages the user's preferences for YubiKey slots and a string that
  * uniquely identifies the purpose of the requested action.
  */
-internal class SlotPreferenceManager(context: Context) {
+@Singleton
+class SlotPreferenceManager @Inject constructor(
+    @ApplicationContext context: Context
+) {
     private val slotPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     /**
