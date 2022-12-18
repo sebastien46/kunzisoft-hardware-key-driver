@@ -17,15 +17,19 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
-import com.kunzisoft.hardware.yubikey.challenge.DummyYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 
-internal data class ConnectionMethods(val isUsbSupported: Boolean, val isNfcSupported: Boolean)
+internal data class ConnectionMethods(
+    val isUsbSupported: Boolean,
+    val isNfcSupported: Boolean,
+    val isVirtualKeyConfigured: Boolean
+)
 
 internal val ConnectionMethods.hasAnySupport: Boolean
-    get() = isUsbSupported || isNfcSupported
+    get() = isUsbSupported || isNfcSupported || isVirtualKeyConfigured
 
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
@@ -89,23 +93,25 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
 
     override fun onActivityResumed(activity: Activity) {
         // Debug with dummy connection if no supported connection
-        if (BuildConfig.DEBUG && !connectionMethods.hasAnySupport) {
-            initDummyConnection(activity)
-        } else {
-            if (connectReceiver != null) {
-                if (connectionMethods.isUsbSupported) {
-                    initUSBConnection(activity)
-                }
-                if (connectionMethods.isNfcSupported) {
-                    initNFCConnection(activity)
+        if (connectionMethods.hasAnySupport) {
+            if (connectionMethods.isVirtualKeyConfigured) {
+                initVirtualKeyConnection(activity)
+            } else {
+                if (connectReceiver != null) {
+                    if (connectionMethods.isUsbSupported) {
+                        initUSBConnection(activity)
+                    }
+                    if (connectionMethods.isNfcSupported) {
+                        initNFCConnection(activity)
+                    }
                 }
             }
         }
     }
 
-    private fun initDummyConnection(activity: Activity) {
+    private fun initVirtualKeyConnection(activity: Activity) {
         // Debug by injecting a known byte array
-        connectReceiver!!.onYubiKeyConnected(DummyYubiKey(activity))
+        connectReceiver?.onYubiKeyConnected(VirtualYubiKey(activity))
     }
 
     private fun initUSBConnection(activity: Activity) {
@@ -289,8 +295,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      */
     fun getSupportedConnectionMethods(context: Context): ConnectionMethods {
         val packageManager = context.packageManager
-        var isUsbSupported: Boolean = false
-        var isNfcSupported: Boolean = false
+        var isUsbSupported = false
+        var isNfcSupported = false
+        var isVirtualKeyConfigured = false
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) {
             isUsbSupported = true
@@ -299,8 +306,12 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             && NfcAdapter.getDefaultAdapter(context).isEnabled) {
             isNfcSupported = true
         }
+        // TODO virtual key configured
+        if (BuildConfig.DEBUG) {
+            isVirtualKeyConfigured = true
+        }
 
-        return ConnectionMethods(isUsbSupported, isNfcSupported)
+        return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualKeyConfigured)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}

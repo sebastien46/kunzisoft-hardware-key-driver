@@ -75,6 +75,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
             setText(R.string.attach_yubikey)
         } else if (connectionMethods.isNfcSupported) {
             setText(R.string.swipe_yubikey)
+        } else if (connectionMethods.isVirtualKeyConfigured) {
+            setText(R.string.virtual_key_generate)
         } else {
             setText(R.string.no_supported_connection_method, true)
             return
