@@ -43,6 +43,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     private var usbPermissionDeniedReceiver: UsbPermissionDeniedReceiver? = null
 
     private var requestingUsbPermission: Boolean = false
+    private var activityPausedForUsbPermission: Boolean = false
 
     private val connectionMethods = getSupportedConnectionMethods(activity)
 
@@ -92,17 +93,23 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     override fun onActivityStarted(activity: Activity) {}
 
     override fun onActivityResumed(activity: Activity) {
-        // Debug with dummy connection if no supported connection
-        if (connectionMethods.hasAnySupport) {
-            if (connectionMethods.isVirtualKeyConfigured) {
-                initVirtualKeyConnection(activity)
-            } else {
-                if (connectReceiver != null) {
-                    if (connectionMethods.isUsbSupported) {
-                        initUSBConnection(activity)
-                    }
-                    if (connectionMethods.isNfcSupported) {
-                        initNFCConnection(activity)
+        // Don't initialize a connection when the activity has just been resumed from the
+        // USB permission dialog (connection has already been initialized).
+        if (activityPausedForUsbPermission) {
+            activityPausedForUsbPermission = false
+        } else {
+            // Debug with dummy connection if no supported connection
+            if (connectionMethods.hasAnySupport) {
+                if (connectionMethods.isVirtualKeyConfigured) {
+                    initVirtualKeyConnection(activity)
+                } else {
+                    if (connectReceiver != null) {
+                        if (connectionMethods.isUsbSupported) {
+                            initUSBConnection(activity)
+                        }
+                        if (connectionMethods.isNfcSupported) {
+                            initNFCConnection(activity)
+                        }
                     }
                 }
             }
@@ -276,6 +283,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         }
 
+        activityPausedForUsbPermission = true
         usbManager.requestPermission(
             device,
             PendingIntent.getBroadcast(
