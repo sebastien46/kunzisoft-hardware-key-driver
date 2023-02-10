@@ -307,9 +307,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             isNfcSupported = true
         }
         // TODO virtual key configured
-        if (BuildConfig.DEBUG) {
-            isVirtualKeyConfigured = true
-        }
+        //if (BuildConfig.DEBUG) {
+        //    isVirtualKeyConfigured = true
+        //}
 
         return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualKeyConfigured)
     }
