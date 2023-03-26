@@ -297,7 +297,8 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         val packageManager = context.packageManager
         var isUsbSupported = false
         var isNfcSupported = false
-        var isVirtualKeyConfigured = false
+        // Virtual key configured to true for emulator testing
+        val isVirtualKeyConfigured = false
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) {
             isUsbSupported = true
@@ -306,10 +307,6 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             && NfcAdapter.getDefaultAdapter(context).isEnabled) {
             isNfcSupported = true
         }
-        // TODO virtual key configured
-        //if (BuildConfig.DEBUG) {
-        //    isVirtualKeyConfigured = true
-        //}
 
         return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualKeyConfigured)
     }
