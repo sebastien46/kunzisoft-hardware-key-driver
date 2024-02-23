@@ -45,7 +45,19 @@ dependencies {
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
     implementation 'androidx.preference:preference-ktx:1.2.1'
+
+    implementation 'com.github.BryanJacobs.FIDOk:fidok-jvm:v0.0.3'
+    implementation 'com.github.BryanJacobs.FIDOk:fidok-android:v0.0.3'
 }
 repositories {
     mavenCentral()
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == "us.q3q.fidok"
+                && details.requested.name == "fidok") {
+            details.useTarget("com.github.BryanJacobs.FIDOk:fidok-jvm:${details.requested.version}")
+        }
+    }
 }
