@@ -17,17 +17,19 @@
     <string name="html_text_dev_feature_encourage">you are encouraging developers to create &lt;strong&gt;new features&lt;/strong&gt; and to &lt;strong&gt;fix bugs&lt;/strong&gt; according to your remarks.</string>
 
     <string name="set_recovery_key">Set the recovery key.</string>
-    <string name="attach_yubikey">Plug in the YubiKey.</string>
-    <string name="attach_or_swipe_yubikey">Plug in or put the YubiKey on the NFC reader.</string>
-    <string name="swipe_yubikey">Put the Yubikey on the NFC reader.</string>
+    <string name="attach_yubikey">Plug in the authenticator.</string>
+    <string name="attach_or_swipe_yubikey">Plug in or put the authenticator on the NFC reader.</string>
+    <string name="swipe_yubikey">Put the authenticator on the NFC reader.</string>
     <string name="virtual_key_generate">The virtual key is being generated.</string>
     <string name="no_supported_connection_method">Your device supports neither USB host mode nor NFC. YubiKeys can not be used.</string>
-    <string name="press_button">Press the button on your YubiKey.</string>
-    <string name="error_unplug_yubikey">An error has occurred. Unplug your YubiKey.</string>
-    <string name="error_yubikey_slowly">An error has occurred. Keep the Yubikey on the NFC receiver longer.</string>
-    <string name="error_yubikey_configure">An error has occurred. Make sure your key is properly configured.</string>
-    <string name="invalid_challenge">An invalid challenge was passed. Contact the support of the app you are trying to use with.</string>
-    <string name="usb_permission_denied">USB permission denied. Unplug your YubiKey.</string>
+    <string name="press_button">Press the button on your authenticator.</string>
+    <string name="error_unplug_yubikey">An error has occurred. Unplug your authenticator.</string>
+    <string name="error_yubikey_slowly">An error has occurred. Keep the authenticator on the NFC receiver longer.</string>
+    <string name="error_yubikey_configure">An error has occurred. Make sure your authenticator is properly configured.</string>
+    <string name="invalid_challenge">An invalid challenge was passed. Contact the support team for the app you were trying to use with this one.</string>
+    <string name="invalid_intent">An invalid Intent was passed. Contact the support team for this app.</string>
+    <string name="usb_permission_denied">USB permission denied. Unplug your authenticator.</string>
+    <string name="pin_missing">Please provide your PIN before connecting the authenticator.</string>
     <string name="retry">Retry</string>
     <string name="ok">OK</string>
     <string name="success_unplug_nfc_key">Response generated!\n\nRemove the key from the NFC reader and press OK to return to the app requiring the challenge.</string>
@@ -62,5 +64,10 @@
     <string name="vibration_pref" translatable="false">vibration_pref</string>
     <string name="vibration">Vibration</string>
     <string name="vibration_summary">Perform a vibration when the hardware key is correctly read</string>
+    <string name="pin_hint">FIDO PIN</string>
+    <string name="rp_id_get_display">Using RP ID: %1$s</string>
+    <string name="rp_id_create_display">Creating for RP ID: %1$s</string>
+    <string name="ctap_error">CTAP Error: %1$s</string>
+    <string name="no_hmac_created">Authenticator didn\'t create an HMAC credential. Try another authenticator.</string>
     <bool name="vibration_default" translatable="false">true</bool>
 </resources>

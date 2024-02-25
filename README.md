@@ -19,20 +19,90 @@ The application allows to use :
 
 ## Integration
 
-### Solokey
+### Solokey or other FIDO2 Authenticator
 
-(In development)
+This driver supports NFC or USB FIDO2 Authenticators that implement both the FIDO2 `hmac-secret` extension and either `clientPin`
+or onboard user verification (or both).
+
+#### Creating a Credential
+
+The client application needs to call a Key Driver activity for a response to be provided. For this, one must send an Intent `android.fido.intent.action.HMAC_SECRET_CREATE` with extra data:
+
+- `String rpId`: The FIDO2 Relying Party ID for which the Credential is being created. This will be displayed to the user.
+
+After the user's action, the Key Driver activity will return an extra:
+
+- `byte[] credentialId`: The FIDO Credential ID that was created. This Credential has support for the `hmac-secret` extension and can be used later.
+
+#### Getting a response for an existing Credential
+
+The client application needs to call a Key Driver activity for a response to be provided. For this, one must send an Intent `android.fido.intent.action.HMAC_SECRET_CHALLENGE_RESPONSE` with extra data:
+
+- `byte[] challenge`: The challenge for which a response is to be provided. This must be either 32 bytes long.
+- `byte[] challenge_2`: An optional second challenge, also 32 bytes long if provided.
+- `String rpId`: The FIDO2 Relying Party ID for which the challenge is being made. This will be displayed to the user, and must match the provided Credential(s) (or a Discoverable
+   Credential stored on the user's Authenticator).
+- `int numCredentials`: The number of credentials being provided in the Intent. May be zero, or omitted (treated the same as zero). If zero, the Authenticator will try to respond using
+  a FIDO2 Discoverable Credential (aka a Resident Key).
+- `byte[] credential_0`, `byte[] credential_1`,  through `byte[] credential_<numCredentials>`: FIDO Credential IDs, as provided by the Authenticator being used. The response
+  will pertain to one of these credentials if any are provided.
+
+After the user's action, the Key Driver activity will return extras:
+
+- `byte[] response`: Response to `challenge`.
+- `byte[] response_2`: Response to `challenge_2`. Only present if `challenge_2` was provided.
+- `byte[] credentialId`: The FIDO Credential ID that was used to generate the responses. May be one of the Credentials provided in the input, or will be a Discoverable Credential's ID
+   if no input Credentials were provided.
+
+```kotlin
+
+private var getHMACResultLauncher: ActivityResultLauncher<Intent>? = null
+
+// Request with a challenge
+fun launchChallengeForResponse(seed1: ByteArray, seed2: ByteArray?, credentials: List<ByteArray>) {
+    // Send the seed(s) and credentials to the driver
+    getHMACResultLauncher?.launch(
+        Intent("android.fido.intent.action.HMAC_SECRET_CHALLENGE_RESPONSE").apply {
+            putExtra("rpId", "relyingparty.for.example")
+            putExtra("challenge", seed1)
+            putExtra("challenge_2", seed2)
+            putExtra("numCredentials", credentials.size)
+            for (i in credentials.indices) {
+                putExtra("credential_${i}", credentials[i])
+            }
+        }
+    )
+}
+
+// Wait for the response
+fun buildHardwareKeyResponse(onChallengeResponded: (challengeResponse: ByteArray?) -> Unit) {
+    val resultCallback = ActivityResultCallback<ActivityResult> { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val challengeResponse1: ByteArray? = result.data?.getByteArrayExtra("response")
+            val challengeResponse2: ByteArray? = result.data?.getByteArrayExtra("response_2")
+            onChallengeResponded.invoke(challengeResponse1, challengeResponse2)
+        } else {
+            onChallengeResponded.invoke(null, null)
+        }
+    }
+
+    getHMACResultLauncher = activity?.registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+        resultCallback
+    )
+}
+```
 
 ### Yubikey
 
-The client application needs to call a Key Driver activity for a response to be provided. For this, it is needed to call an Intent `android.yubikey.intent.action.CHALLENGE_RESPONSE`with an extra data _byte[]_ challenge. After the user's actions, the Key Driver activity will return an extra __byte[]_ response.
+The client application needs to call a Key Driver activity for a response to be provided. For this, one must send an Intent `android.yubikey.intent.action.CHALLENGE_RESPONSE` with extra data `byte[] challenge`. After the user's action, the Key Driver activity will return an extra `byte[] response`.
 
 
 ```kotlin
 
 private var getChallengeResponseResultLauncher: ActivityResultLauncher<Intent>? = null
 
-// Request with a challenge  
+// Request with a challenge
 fun launchChallengeForResponse(seed: ByteArray?) {
     // Send the seed to the driver
     getChallengeResponseResultLauncher?.launch(
@@ -42,7 +112,7 @@ fun launchChallengeForResponse(seed: ByteArray?) {
     )
 }
 
-// Wait the response
+// Wait for the response
 fun buildHardwareKeyResponse(onChallengeResponded: (challengeResponse: ByteArray?) -> Unit) {
     val resultCallback = ActivityResultCallback<ActivityResult> { result ->
         if (result.resultCode == Activity.RESULT_OK) {

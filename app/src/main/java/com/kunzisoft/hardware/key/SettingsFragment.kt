@@ -18,13 +18,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-        findPreference<Preference>(getString(R.string.solokey_pref))
-            ?.setOnPreferenceClickListener {
-                UnderDevelopmentFeatureDialogFragment()
-                    .show(requireActivity().supportFragmentManager, "underDevFeatureDialog")
-                true
-            }
-
         findPreference<Preference>(getString(R.string.yubikey_pref))
             ?.setOnPreferenceClickListener { _ ->
                 findNavController()
