@@ -2,11 +2,11 @@
 
 Key Driver is a **driver application for hardware keys** (SoloKey and Yubikey) that provides an answer to a challenge for applications requiring physical key authentication.
 
-The application allows to use : 
+The application allows use of: 
 
- - The hmac-secret FIDO2 functionnality of SoloKey.
+ - The hmac-secret FIDO2 functionality of a SoloKey, YubiKey, or other FIDO2 Authenticator (over USB or NFC).
 
- - The HMAC-SHA1 challenge-response functionality of Yubikey with USB OTG or NFC connection.
+ - The HMAC-SHA1 challenge-response functionality of a Yubikey with USB OTG or NFC connection.
 
 ## Download
 
