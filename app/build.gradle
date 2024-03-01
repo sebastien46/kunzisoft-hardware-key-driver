@@ -1,8 +1,11 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.dagger.hilt.android'
+apply plugin: 'app.cash.molecule'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
     buildToolsVersion '32.0.0'
     defaultConfig {
         applicationId "com.kunzisoft.hardware.key"
@@ -42,11 +45,21 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
 
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:$hilt_version"
+    implementation "app.cash.molecule:molecule-runtime:$molecule_version"
+    implementation 'androidx.compose.runtime:runtime:1.3.2'
+
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
     implementation 'androidx.preference:preference-ktx:1.2.0'
 }
+
+kapt {
+    correctErrorTypes true
+}
+
 repositories {
     mavenCentral()
 }

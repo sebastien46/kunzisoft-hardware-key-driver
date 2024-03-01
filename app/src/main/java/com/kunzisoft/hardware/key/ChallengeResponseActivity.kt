@@ -1,20 +1,17 @@
 package com.kunzisoft.hardware.key
 
 import android.content.Intent
-import android.nfc.TagLostException
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import android.view.Window
-import androidx.annotation.StringRes
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.kunzisoft.hardware.key.databinding.ActivityChallengeBinding
-import com.kunzisoft.hardware.yubikey.Slot
-import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
-import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
-import com.kunzisoft.hardware.yubikey.challenge.YubiKey
-import kotlinx.coroutines.*
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 /**
@@ -30,19 +27,18 @@ import kotlinx.coroutines.*
  * purpose.
  *
  */
-class ChallengeResponseActivity : AppCompatActivity(),
-    ConnectionManager.YubiKeyConnectReceiver,
-    ConnectionManager.YubiKeyUsbUnplugReceiver,
-    ConnectionManager.UsbPermissionDeniedReceiver {
+@AndroidEntryPoint
+class ChallengeResponseActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChallengeBinding
 
-    private lateinit var connectionManager: ConnectionManager
-    private lateinit var slotPreferenceManager: SlotPreferenceManager
-
-    private var selectedSlot: Slot = Slot.CHALLENGE_HMAC_2
-    private var purpose: String? = null
-    private var challenge: ByteArray? = null
+    @Inject
+    lateinit var factory: ChallengeResponseViewModel.Factory
+    private val viewModel: ChallengeResponseViewModel by viewModels {
+        LambdaFactory {
+            factory.build(this.intent, binding.events(), ConnectionManager(this))
+        }
+    }
 
     private var newIntentReceive: Intent? = null
 
@@ -56,156 +52,35 @@ class ChallengeResponseActivity : AppCompatActivity(),
         binding = ActivityChallengeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        challenge = this.intent.getByteArrayExtra(CHALLENGE_TAG)
-        if (challenge == null || challenge!!.isEmpty()) {
-            setText(R.string.invalid_challenge, true)
-            return
-        }
-
-        purpose = this.intent.getStringExtra(SLOT_TAG)
-
         keySoundManager = KeySoundManager(this)
 
-        connectionManager = ConnectionManager(this)
-        slotPreferenceManager = SlotPreferenceManager(this)
-        val connectionMethods = connectionManager.getSupportedConnectionMethods(this)
-        if (connectionMethods.isUsbSupported && connectionMethods.isNfcSupported) {
-            setText(R.string.attach_or_swipe_yubikey)
-        } else if (connectionMethods.isUsbSupported) {
-            setText(R.string.attach_yubikey)
-        } else if (connectionMethods.isNfcSupported) {
-            setText(R.string.swipe_yubikey)
-        } else if (connectionMethods.isVirtualKeyConfigured) {
-            setText(R.string.virtual_key_generate)
-        } else {
-            setText(R.string.no_supported_connection_method, true)
-            return
-        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiModel.collect { uiModel ->
+                    binding.bind(uiModel)
 
-        selectedSlot = slotPreferenceManager.getPreferredSlot(purpose)
-        selectSlot(selectedSlot)
-        binding.slot1.setOnCheckedChangeListener { _, b ->
-            if (b)
-                selectSlot(Slot.CHALLENGE_HMAC_1)
-        }
-        binding.slot2.setOnCheckedChangeListener { _, b ->
-            if (b)
-                selectSlot(Slot.CHALLENGE_HMAC_2)
-        }
+                    if (uiModel is Done) {
+                        if (uiModel.shouldNotifySuccess) {
+                            keySoundManager.notifySuccess()
+                        }
 
-        binding.retryButton.setOnClickListener {
-            recreate()
+                        val result = Intent()
+                        result.putExtra(RESPONSE_TAG, viewModel.response)
+                        this@ChallengeResponseActivity.setResult(RESULT_OK, result)
+                        finish()
+                    }
+                }
+            }
         }
-
-        connectionManager.waitForYubiKey(this)
-        connectionManager.registerUsbPermissionDeniedReceiver(this)
     }
 
     override fun onResume() {
         super.onResume()
         // Call connection manager broadcast response
         newIntentReceive?.let {
-            connectionManager.onReceive(this, it)
+            viewModel.handleNewReceivedIntent(this, it)
         }
         newIntentReceive = null
-    }
-
-    private fun selectSlot(slot: Slot) {
-        selectedSlot = slot
-        when (selectedSlot) {
-            Slot.CHALLENGE_HMAC_1 -> {
-                binding.slot1.isChecked = true
-                binding.slot2.isChecked = false
-            }
-            Slot.CHALLENGE_HMAC_2 -> {
-                binding.slot1.isChecked = false
-                binding.slot2.isChecked = true
-            }
-            else -> {}
-        }
-    }
-
-    override fun onYubiKeyConnected(yubiKey: YubiKey) {
-        if (yubiKey is UsbYubiKey)
-            binding.info.setText(R.string.press_button)
-        hideSlotSelection()
-
-         lifecycleScope.launch {
-             withContext(Dispatchers.IO) {
-                 val asyncResult: Deferred<ByteArray?> = async {
-                     try {
-                         yubiKey.challengeResponse(
-                             selectedSlot,
-                             challenge!!
-                         )
-                     } catch (e: Exception) {
-                         withContext(Dispatchers.Main) {
-                             Log.e(TAG, "Error during challenge-response request", e)
-                             if (yubiKey is UsbYubiKey) {
-                                 connectionManager.waitForYubiKeyUnplug(
-                                     this@ChallengeResponseActivity,
-                                     this@ChallengeResponseActivity
-                                 )
-                                 setText(R.string.error_unplug_yubikey, true)
-                             }
-                             if (yubiKey is NfcYubiKey) {
-                                 if (e.cause is TagLostException) {
-                                     setText(R.string.error_yubikey_slowly, true)
-                                 } else {
-                                     setText(R.string.error_yubikey_configure, true)
-                                 }
-                                 binding.retryButton.visibility = View.VISIBLE
-                             }
-                         }
-                         null
-                     }
-                 }
-                 withContext(Dispatchers.Main) {
-                     val response = asyncResult.await()
-                     if (response != null) {
-                         if (yubiKey is NfcYubiKey) {
-                             keySoundManager.notifySuccess()
-                         }
-                         slotPreferenceManager.setPreferredSlot(
-                             purpose,
-                             selectedSlot
-                         )
-                         val result = Intent()
-                         result.putExtra(RESPONSE_TAG, response)
-                         this@ChallengeResponseActivity.setResult(RESULT_OK, result)
-                         finish()
-                     }
-                     hideSlotSelection()
-                 }
-             }
-        }
-    }
-
-    override fun onYubiKeyUnplugged() {
-        recreate()
-    }
-
-    override fun onUsbPermissionDenied() {
-        connectionManager.waitForYubiKeyUnplug(
-            this@ChallengeResponseActivity,
-            this@ChallengeResponseActivity
-        )
-        setText(R.string.usb_permission_denied, true)
-    }
-
-
-    private fun hideSlotSelection() {
-        binding.slotChipGroup.visibility = View.INVISIBLE
-    }
-
-    private fun setText(@StringRes stringRes: Int,
-                        error: Boolean = false) {
-        binding.info.setText(stringRes)
-        if (error) {
-            binding.waiting.visibility = View.INVISIBLE
-            binding.failure.visibility = View.VISIBLE
-            hideSlotSelection()
-        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -217,8 +92,6 @@ class ChallengeResponseActivity : AppCompatActivity(),
     }
 
     companion object {
-        val TAG: String = ChallengeResponseActivity::class.java.simpleName
-
         const val CHALLENGE_TAG = "challenge"
         const val SLOT_TAG = "purpose"
         const val RESPONSE_TAG = "response"

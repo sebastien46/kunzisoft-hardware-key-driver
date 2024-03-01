@@ -22,7 +22,7 @@ import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 
-internal data class ConnectionMethods(
+data class ConnectionMethods(
     val isUsbSupported: Boolean,
     val isNfcSupported: Boolean,
     val isVirtualKeyConfigured: Boolean
@@ -34,7 +34,7 @@ internal val ConnectionMethods.hasAnySupport: Boolean
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
  */
-internal class ConnectionManager(private val activity: Activity) : BroadcastReceiver(),
+class ConnectionManager(private val activity: Activity) : BroadcastReceiver(),
     NfcAdapter.ReaderCallback,
     ActivityLifecycleCallbacks {
 
@@ -49,7 +49,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     /**
      * Receiver interface that is called when a YubiKey was connected.
      */
-    internal interface YubiKeyConnectReceiver {
+    interface YubiKeyConnectReceiver {
         /**
          * Called when a YubiKey was connected via USB or NFC.
          *
@@ -62,7 +62,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     /**
      * Receiver interface that is called when a YubiKey connected via USB was unplugged.
      */
-    internal interface YubiKeyUsbUnplugReceiver {
+    interface YubiKeyUsbUnplugReceiver {
         /**
          * Called when a YubiKey connected via USB was unplugged.
          */
@@ -73,7 +73,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
      * Receiver interface that is called when the user denied the permission for accessing the
      * YubiKey via USB.
      */
-    internal interface UsbPermissionDeniedReceiver {
+    interface UsbPermissionDeniedReceiver {
         /**
          * Called when the user denied the permission for accessing the YubiKey via USB.
          */
@@ -92,6 +92,10 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     override fun onActivityStarted(activity: Activity) {}
 
     override fun onActivityResumed(activity: Activity) {
+        initConnection()
+    }
+
+    fun initConnection() {
         // Debug with dummy connection if no supported connection
         if (connectionMethods.hasAnySupport) {
             if (connectionMethods.isVirtualKeyConfigured) {
