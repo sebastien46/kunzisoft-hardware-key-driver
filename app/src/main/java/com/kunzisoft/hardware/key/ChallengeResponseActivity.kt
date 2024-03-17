@@ -67,6 +67,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
         keySoundManager = KeySoundManager(this)
 
         connectionManager = ConnectionManager(this)
+        connectionManager.setExpectedChallenge(challenge)
         slotPreferenceManager = SlotPreferenceManager(this)
         val connectionMethods = connectionManager.getSupportedConnectionMethods(this)
         if (connectionMethods.isUsbSupported && connectionMethods.isNfcSupported) {
@@ -75,6 +76,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
             setText(R.string.attach_yubikey)
         } else if (connectionMethods.isNfcSupported) {
             setText(R.string.swipe_yubikey)
+        } else if (connectionMethods.isVirtualChallengeConfigured) {
+            setText(R.string.virtual_challenge_fetch)
         } else if (connectionMethods.isVirtualKeyConfigured) {
             setText(R.string.virtual_key_generate)
         } else {
@@ -134,10 +137,15 @@ class ChallengeResponseActivity : AppCompatActivity(),
              withContext(Dispatchers.IO) {
                  val asyncResult: Deferred<ByteArray?> = async {
                      try {
-                         yubiKey.challengeResponse(
+                         val challenge = this@ChallengeResponseActivity.challenge!!
+                         val response = yubiKey.challengeResponse(
                              selectedSlot,
-                             challenge!!
+                             challenge
                          )
+                         if (yubiKey !is VirtualChallengeManager.VirtualResponseKey) {
+                             connectionManager.registerVirtualChallengeResponse(challenge, response)
+                         }
+                         response
                      } catch (e: Exception) {
                          withContext(Dispatchers.Main) {
                              Log.e(TAG, "Error during challenge-response request", e)

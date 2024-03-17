@@ -17,8 +17,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
+import android.widget.Toast
+import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+import androidx.fragment.app.FragmentActivity
 import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
@@ -27,11 +30,13 @@ import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 internal data class ConnectionMethods(
     val isUsbSupported: Boolean,
     val isNfcSupported: Boolean,
+    val isVirtualChallengeConfigured: Boolean,
     val isVirtualKeyConfigured: Boolean
 )
 
 internal val ConnectionMethods.hasAnySupport: Boolean
     get() = isUsbSupported || isNfcSupported || isVirtualKeyConfigured
+            || isVirtualChallengeConfigured
 
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
@@ -43,6 +48,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     private var connectReceiver: YubiKeyConnectReceiver? = null
     private var unplugReceiver: YubiKeyUsbUnplugReceiver? = null
     private var usbPermissionDeniedReceiver: UsbPermissionDeniedReceiver? = null
+
+    private val virtualChallengeManager = VirtualChallengeManager(activity)
+    private var challenge: ByteArray? = null
 
     private var requestingUsbPermission: Boolean = false
     private var activityPausedForUsbPermission: Boolean = false
@@ -105,6 +113,9 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                 if (connectionMethods.isVirtualKeyConfigured) {
                     initVirtualKeyConnection(activity)
                 } else {
+                    if (connectionMethods.isVirtualChallengeConfigured) {
+                        initVirtualChallenge(activity)
+                    }
                     if (connectReceiver != null) {
                         if (connectionMethods.isUsbSupported) {
                             initUSBConnection(activity)
@@ -116,6 +127,60 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                 }
             }
         }
+    }
+
+    fun setExpectedChallenge(challenge: ByteArray?) {
+        this.challenge = challenge
+    }
+
+    private fun createAuthCallback(onSuccess: Runnable): BiometricPrompt.AuthenticationCallback {
+        return object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                onSuccess.run()
+            }
+
+            override fun onAuthenticationFailed() {
+                Toast.makeText(activity, R.string.error_authenticate_biometrics, Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                Toast.makeText(activity, R.string.error_authenticate_biometrics, Toast.LENGTH_SHORT).show()
+            }
+        };
+    }
+
+    private fun initVirtualChallenge(activity: Activity) {
+        if (activity !is FragmentActivity) return
+
+        if (challenge != null) {
+            val challengeHash = VirtualChallengeHelper.calcHashString(challenge!!)
+            if (!virtualChallengeManager.hasChallenge(challengeHash)) return
+        }
+
+        virtualChallengeManager.biometricAuthenticate(activity, createAuthCallback {
+            connectReceiver?.onYubiKeyConnected(virtualChallengeManager
+                .asKey(VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS))
+        })
+    }
+
+    fun registerVirtualChallengeResponse(challenge: ByteArray, response: ByteArray) {
+        if (activity !is FragmentActivity) return
+        virtualChallengeManager.biometricAuthenticate(activity, createAuthCallback {
+            try {
+                virtualChallengeManager
+                    .asKey(VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS)
+                    .storeResponseAsChallenge(challenge, response)
+            } catch (e: Exception) {
+                try {
+                    // Show error message:
+                    val message = String.format(
+                        activity.getString(R.string.error_store_virtual_challenge),
+                        (e.javaClass.simpleName + ": " +  e.localizedMessage)
+                    )
+                    Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
+                } catch (ignored: Exception) {}
+            }
+        })
     }
 
     private fun initVirtualKeyConnection(activity: Activity) {
@@ -320,7 +385,10 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             isNfcSupported = true
         }
 
-        return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualKeyConfigured)
+        val isVirtualChallengeConfigured = VirtualChallengeManager(context)
+            .canAuthenticateWith(VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS)
+
+        return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualChallengeConfigured, isVirtualKeyConfigured)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
