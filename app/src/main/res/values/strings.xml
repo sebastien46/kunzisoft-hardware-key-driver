@@ -30,7 +30,7 @@
     <string name="error_yubikey_slowly">An error has occurred. Keep the Yubikey on the NFC receiver longer.</string>
     <string name="error_yubikey_configure">An error has occurred. Make sure your key is properly configured.</string>
     <string name="error_authenticate_biometrics">Unable to verify user using biometrics.</string>
-    <string name="error_store_virtual_challenge">Unable to store virtual challenge response due to: {}.</string>
+    <string name="error_store_virtual_challenge">Unable to store virtual challenge response due to: %s.</string>
     <string name="error_init_virtual_challenge_key">Unable to initialize virtual challenge storage encryption key.</string>
     <string name="error_clear_virtual_challenge_key">Unable to clear virtual challenge storage encryption key.</string>
     <string name="invalid_challenge">An invalid challenge was passed. Contact the support of the app you are trying to use with.</string>
