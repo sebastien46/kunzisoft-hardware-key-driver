@@ -15,6 +15,7 @@ import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
+import java.util.concurrent.CountDownLatch
 
 
 /**
@@ -143,7 +144,12 @@ class ChallengeResponseActivity : AppCompatActivity(),
                              challenge
                          )
                          if (yubiKey !is VirtualChallengeManager.VirtualResponseKey) {
-                             connectionManager.registerVirtualChallengeResponse(challenge, response)
+                             val registerFuture = CountDownLatch(1)
+                             withContext(Dispatchers.Main) {
+                                 connectionManager.registerVirtualChallengeResponse(challenge, response,
+                                     registerFuture)
+                             }
+                             registerFuture.await()
                          }
                          response
                      } catch (e: Exception) {
