@@ -44,7 +44,7 @@ public class KeyManager {
         return keyStore.containsAlias(secretKeyAlias);
     }
 
-    /** @noinspection UnusedReturnValue*/
+    /** @noinspection UnusedReturnValue */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static SecretKey createSecretKey(String secretKeyAlias) throws KeyStoreException {
         try {
@@ -86,17 +86,33 @@ public class KeyManager {
         }
     }
 
-    public byte[] encrypt(byte[] data, String secretKeyAlias)
-            throws KeyStoreException, CryptException {
-        return encrypt(data, getSecretKey(secretKeyAlias));
+    private static Cipher createCipher() throws CryptException {
+        try {
+            return Cipher.getInstance(AES_MODE);
+        } catch (NoSuchPaddingException ex) {
+            throw new CryptException("no such padding", ex);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new CryptException("no such algorithm", ex);
+        }
     }
 
-    public byte[] encrypt(byte[] data, SecretKey secretKey)
-            throws CryptException {
-        try {
-            Cipher cipher = Cipher.getInstance(AES_MODE);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+    public Cipher createEncryptCipher(String secretKeyAlias)
+            throws KeyStoreException, CryptException {
+        return createEncryptCipher(getSecretKey(secretKeyAlias));
+    }
 
+    public static Cipher createEncryptCipher(SecretKey secretKey) throws CryptException {
+        try {
+            Cipher cipher = createCipher();
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return cipher;
+        } catch (InvalidKeyException ex) {
+            throw new CryptException("invalid key", ex);
+        }
+    }
+
+    public static byte[] encrypt(byte[] data, Cipher cipher) throws CryptException {
+        try {
             byte[] iv = cipher.getIV();
             byte[] encryptedData = cipher.doFinal(data);
 
@@ -109,47 +125,46 @@ public class KeyManager {
             System.arraycopy(encryptedData, 0, data, 0, encryptedDataSize);
             System.arraycopy(iv, 0, data, encryptedDataSize, AES_IV_SIZE);
             return data;
-        } catch (NoSuchPaddingException ex) {
-            throw new CryptException("no such padding", ex);
         } catch (IllegalBlockSizeException ex) {
             throw new CryptException("invalid block size", ex);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new CryptException("no such algorithm", ex);
         } catch (BadPaddingException ex) {
             throw new CryptException("bad padding", ex);
-        } catch (InvalidKeyException ex) {
-            throw new CryptException("invalid key", ex);
         } catch (NullPointerException ex) {
             throw new CryptException("null as input", ex);
         }
     }
 
-    public byte[] decrypt(byte[] data, String secretKeyAlias)
-            throws KeyStoreException, CryptException, BadPaddingException {
-        return decrypt(data, getSecretKey(secretKeyAlias));
+    public Cipher createDecryptCipher(String secretKeyAlias, byte[] iv)
+            throws KeyStoreException, CryptException {
+        return createDecryptCipher(getSecretKey(secretKeyAlias), iv);
     }
 
-    public byte[] decrypt(byte[] data, SecretKey secretKey)
-            throws CryptException, BadPaddingException {
+    public static Cipher createDecryptCipher(SecretKey secretKey, byte[] iv) throws CryptException {
         try {
-            final int dataSize = data.length - AES_IV_SIZE;
-            final byte[] iv = new byte[AES_IV_SIZE];
-            System.arraycopy(data, dataSize, iv, 0, AES_IV_SIZE);
+            Cipher cipher = createCipher();
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-            Cipher cipher = Cipher.getInstance(AES_MODE);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
-            return cipher.doFinal(data, 0, dataSize);
+            return cipher;
         } catch (InvalidAlgorithmParameterException ex) {
             throw new CryptException("invalid algorithm parameter", ex);
-        } catch (NoSuchPaddingException ex) {
-            throw new CryptException("no such padding", ex);
-        } catch (IllegalBlockSizeException ex) {
-            throw new CryptException("invalid block size", ex);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new CryptException("no such algorithm", ex);
         } catch (InvalidKeyException ex) {
             throw new CryptException("invalid key", ex);
+        }
+    }
+
+    public static byte[] getIv(byte[] data) {
+        final int dataSize = data.length - AES_IV_SIZE;
+        final byte[] iv = new byte[AES_IV_SIZE];
+        System.arraycopy(data, dataSize, iv, 0, AES_IV_SIZE);
+        return iv;
+    }
+
+    public static byte[] decrypt(byte[] data, Cipher cipher) throws CryptException, BadPaddingException {
+        try {
+            final int dataSize = data.length - AES_IV_SIZE;
+            return cipher.doFinal(data, 0, dataSize);
+        } catch (IllegalBlockSizeException ex) {
+            throw new CryptException("invalid block size", ex);
         } catch (IndexOutOfBoundsException ex) {
             throw new CryptException("invalid data length", ex);
         } catch (NullPointerException ex) {
