@@ -6,14 +6,21 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import com.kunzisoft.hardware.key.utils.ChallengeManager
+import com.kunzisoft.hardware.key.utils.SecretKeyHelper
 import com.kunzisoft.hardware.yubikey.Slot
 
 class YubikeySettingsFragment : PreferenceFragmentCompat() {
-    private lateinit var virtualChallengeManager: VirtualChallengeManager
+    private lateinit var secretKeyManager: SecretKeyHelper
+    private lateinit var challengeManager: ChallengeManager
+    private lateinit var secretKeyAlias: String
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.yubikey_preferences, rootKey)
-        virtualChallengeManager = VirtualChallengeManager(requireContext())
+
+        secretKeyManager = SecretKeyHelper()
+        challengeManager = ChallengeManager(requireContext())
+        secretKeyAlias = ConnectionManager.YUBICO_SECRET_KEY_ALIAS
 
         val slotPreferenceManager = SlotPreferenceManager(requireContext())
 
@@ -38,9 +45,8 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        val secretKeyAlias = VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS
         val clearVirtualChallengePref = findPreference<Preference>(getString(R.string.clear_virtual_challenges_pref))?.apply {
-            isEnabled = virtualChallengeManager.hasSecretKey(secretKeyAlias)
+            isEnabled = secretKeyManager.hasSecretKey(secretKeyAlias)
 
             setOnPreferenceClickListener {
                 if (clearVirtualChallenge()) {
@@ -57,10 +63,14 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
                 if (newValue as Boolean) {
                     if (initVirtualChallenge()) {
                         clearVirtualChallengePref?.isEnabled = true
+                    } else {
+                        isChecked = false
                     }
                 } else {
                     if (clearVirtualChallenge()) {
                         clearVirtualChallengePref?.isEnabled = false
+                    } else {
+                        isChecked = true
                     }
                 }
                 true
@@ -69,8 +79,8 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun initVirtualChallenge(): Boolean {
-        virtualChallengeManager.clearAllChallenges()
-        val success = virtualChallengeManager.createSecretKey(VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS)
+        challengeManager.clearAllChallenges()
+        val success = secretKeyManager.createSecretKey(secretKeyAlias)
 
         if (!success) {
             Toast.makeText(requireContext(), R.string.error_init_virtual_challenge_key,
@@ -80,8 +90,8 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun clearVirtualChallenge(): Boolean {
-        virtualChallengeManager.clearAllChallenges()
-        val success = virtualChallengeManager.deleteSecretKey(VirtualChallengeManager.YUBICO_SECRET_KEY_ALIAS)
+        challengeManager.clearAllChallenges()
+        val success = secretKeyManager.deleteSecretKey(secretKeyAlias)
 
         if (!success) {
             Toast.makeText(requireContext(), R.string.error_clear_virtual_challenge_key,

@@ -1,4 +1,4 @@
-package com.kunzisoft.hardware.key;
+package com.kunzisoft.hardware.key.utils;
 
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
@@ -22,16 +22,16 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 
-public class KeyManager {
+public class SecretKeyManager {
     private static final String KEY_STORE = "AndroidKeyStore";
     private static final String AES_MODE = "AES/GCM/NoPadding";
-    private static final int AES_IV_SIZE = 16;
+    private static final int AES_TAG_SIZE = 128;
 
     private final KeyStore keyStore;
 
-    public KeyManager() throws KeyStoreException {
+    public SecretKeyManager() throws KeyStoreException {
         keyStore = KeyStore.getInstance(KEY_STORE);
         try {
             keyStore.load(null);
@@ -116,14 +116,17 @@ public class KeyManager {
             byte[] iv = cipher.getIV();
             byte[] encryptedData = cipher.doFinal(data);
 
-            if (iv.length != AES_IV_SIZE) {
-                throw new CryptException("IV has invalid size: " + iv.length);
+            final int ivSize = iv.length;
+            final int encryptedDataSize = encryptedData.length;
+
+            if ((ivSize & ~0xFF) != 0) {
+                throw new CryptException("unable to store IV size (" + ivSize + ") in result");
             }
 
-            final int encryptedDataSize = encryptedData.length;
-            data = new byte[encryptedDataSize + AES_IV_SIZE];
+            data = new byte[encryptedDataSize + ivSize + 1];
             System.arraycopy(encryptedData, 0, data, 0, encryptedDataSize);
-            System.arraycopy(iv, 0, data, encryptedDataSize, AES_IV_SIZE);
+            System.arraycopy(iv, 0, data, encryptedDataSize, ivSize);
+            data[data.length - 1] = (byte) ivSize;
             return data;
         } catch (IllegalBlockSizeException ex) {
             throw new CryptException("invalid block size", ex);
@@ -142,7 +145,7 @@ public class KeyManager {
     public static Cipher createDecryptCipher(SecretKey secretKey, byte[] iv) throws CryptException {
         try {
             Cipher cipher = createCipher();
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+            GCMParameterSpec ivSpec = new GCMParameterSpec(AES_TAG_SIZE, iv);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
             return cipher;
         } catch (InvalidAlgorithmParameterException ex) {
@@ -152,16 +155,25 @@ public class KeyManager {
         }
     }
 
+    private static int getIvSize(byte[] data) {
+        return (int) data[data.length - 1] & 0xFF;
+    }
+
+    private static int getDataSize(byte[] data, int ivSize) {
+        return data.length - ivSize - 1;
+    }
+
     public static byte[] getIv(byte[] data) {
-        final int dataSize = data.length - AES_IV_SIZE;
-        final byte[] iv = new byte[AES_IV_SIZE];
-        System.arraycopy(data, dataSize, iv, 0, AES_IV_SIZE);
+        final int ivSize = getIvSize(data);
+        final int dataSize = getDataSize(data, ivSize);
+        final byte[] iv = new byte[ivSize];
+        System.arraycopy(data, dataSize, iv, 0, ivSize);
         return iv;
     }
 
     public static byte[] decrypt(byte[] data, Cipher cipher) throws CryptException, BadPaddingException {
         try {
-            final int dataSize = data.length - AES_IV_SIZE;
+            final int dataSize = getDataSize(data, getIvSize(data));
             return cipher.doFinal(data, 0, dataSize);
         } catch (IllegalBlockSizeException ex) {
             throw new CryptException("invalid block size", ex);

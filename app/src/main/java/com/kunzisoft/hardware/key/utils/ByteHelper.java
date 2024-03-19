@@ -1,4 +1,4 @@
-package com.kunzisoft.hardware.key;
+package com.kunzisoft.hardware.key.utils;
 
 import android.util.Base64;
 
@@ -8,7 +8,7 @@ import androidx.annotation.Nullable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class VirtualChallengeHelper {
+public class ByteHelper {
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final int BASE_64_FLAGS = Base64.NO_PADDING | Base64.NO_WRAP;
 
@@ -36,5 +36,8 @@ public class VirtualChallengeHelper {
         } catch (NoSuchAlgorithmException ex) {
             return null;
         }
+    }
+
+    private ByteHelper() {
     }
 }

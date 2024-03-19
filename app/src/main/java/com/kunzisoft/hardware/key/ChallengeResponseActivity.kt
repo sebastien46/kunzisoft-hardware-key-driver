@@ -10,12 +10,12 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kunzisoft.hardware.key.databinding.ActivityChallengeBinding
+import com.kunzisoft.hardware.key.virtual.VirtualChallengeResponseKey
 import com.kunzisoft.hardware.yubikey.Slot
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 import kotlinx.coroutines.*
-import java.util.concurrent.CountDownLatch
 
 
 /**
@@ -68,7 +68,6 @@ class ChallengeResponseActivity : AppCompatActivity(),
         keySoundManager = KeySoundManager(this)
 
         connectionManager = ConnectionManager(this)
-        connectionManager.setExpectedChallenge(challenge)
         slotPreferenceManager = SlotPreferenceManager(this)
         val connectionMethods = connectionManager.getSupportedConnectionMethods(this)
         if (connectionMethods.isUsbSupported && connectionMethods.isNfcSupported) {
@@ -130,6 +129,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
     }
 
     override fun onYubiKeyConnected(yubiKey: YubiKey) {
+        if (!yubiKey.isAvailable(challenge!!)) return
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
         hideSlotSelection()
@@ -139,17 +139,20 @@ class ChallengeResponseActivity : AppCompatActivity(),
                  val asyncResult: Deferred<ByteArray?> = async {
                      try {
                          val challenge = this@ChallengeResponseActivity.challenge!!
-                         val response = yubiKey.challengeResponse(
-                             selectedSlot,
-                             challenge
-                         )
-                         if (yubiKey !is VirtualChallengeManager.VirtualResponseKey) {
-                             val registerFuture = CountDownLatch(1)
-                             withContext(Dispatchers.Main) {
-                                 connectionManager.registerVirtualChallengeResponse(challenge, response,
-                                     registerFuture)
-                             }
-                             registerFuture.await()
+                         val response = when (yubiKey) {
+                             is YubiKey.Blocking -> yubiKey.challengeResponse(
+                                 selectedSlot,
+                                 challenge
+                             )
+                             is YubiKey.Suspended -> yubiKey.challengeResponse(
+                                 selectedSlot,
+                                 challenge
+                             )
+                             else -> throw IllegalArgumentException("unknown YubiKey Type")
+                         }
+
+                         if (yubiKey !is VirtualChallengeResponseKey) {
+                             connectionManager.registerVirtualChallengeResponse(challenge, response)
                          }
                          response
                      } catch (e: Exception) {
