@@ -2,19 +2,15 @@ package com.kunzisoft.hardware.key.virtual
 
 import android.util.Log
 import android.widget.Toast
-import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import com.kunzisoft.hardware.key.R
+import com.kunzisoft.hardware.key.utils.AuthHelper
 import com.kunzisoft.hardware.key.utils.BioManager
 import com.kunzisoft.hardware.key.utils.ChallengeManager
 import com.kunzisoft.hardware.key.utils.SecretKeyManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.security.KeyStoreException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
 
 class VirtualChallengeAuth(
     private val activity: FragmentActivity,
@@ -28,18 +24,20 @@ class VirtualChallengeAuth(
         null
     }
 
-    private fun showFailedAuthMessage() {
-        Log.e(TAG, "failed to start authentication")
+    private fun showFailedAuthMessage(ex: Exception) {
+        Log.e(TAG, "failed to start authentication", ex)
         Toast.makeText(activity, R.string.error_authenticate_biometrics, Toast.LENGTH_LONG).show()
     }
 
     private fun showFailedStoreMessage(ex: Exception) {
         Log.e(TAG, "failed to store challenge response", ex)
 
-        val message = String.format(
-            activity.getString(R.string.error_store_virtual_challenge),
-            (ex.javaClass.simpleName + ": " + ex.localizedMessage)
-        )
+        val message = ex.localizedMessage?.let { message ->
+            String.format(
+                activity.getString(R.string.error_store_virtual_challenge),
+                message.replaceFirstChar { firstChar -> firstChar.uppercase() }
+            )
+        }
         Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
@@ -55,82 +53,26 @@ class VirtualChallengeAuth(
 
         val encryptedResponse = challengeManager.getEncryptedResponseByChallenge(challenge)
         val iv = SecretKeyManager.getIv(encryptedResponse)
-        val cipher = secretKeyManager.createDecryptCipher(secretKeyAlias, iv)
-        val authObj = BiometricPrompt.CryptoObject(cipher)
+        var cipher = secretKeyManager.createDecryptCipher(secretKeyAlias, iv)
 
-        val responseResultFuture = CompletableFuture<Any>()
-        withContext(Dispatchers.Main) {
-            bioManager.biometricAuthenticate(
-                BioManager.createAuthCallback({ authObj, _ ->
-                    // On success:
-                    activity.lifecycleScope.launch {
-                        responseResultFuture.complete(try {
-                            val authenticatedCipher = authObj?.cipher!!
-                            withContext(Dispatchers.IO) {
-                                SecretKeyManager.decrypt(encryptedResponse, authenticatedCipher)
-                            }
-                        } catch (tr: Throwable) {
-                            tr
-                        })
-                    }
-                }, {
-                    // On Fail:
-                    responseResultFuture.complete(
-                        AuthFailException(
-                            activity.getString(R.string.error_authenticate_biometrics)
-                        )
-                    )
-                }),
-                authObj
-            )
-        }
+        cipher = AuthHelper(bioManager).authBiometricWithCipher(cipher)
 
-        return withContext(Dispatchers.IO) {
-            when (val result = responseResultFuture.get()) {
-                is ByteArray -> result
-                is Exception -> throw result
-                else -> throw IllegalStateException("unknown result type")
-            }
-        }
+        return SecretKeyManager.decrypt(encryptedResponse, cipher)
     }
 
     suspend fun registerChallengeResponse(challenge: ByteArray, response: ByteArray) {
         if (secretKeyManager == null) return
 
         try {
-            val cipher = secretKeyManager.createEncryptCipher(secretKeyAlias)
-            val authObj = BiometricPrompt.CryptoObject(cipher)
+            var cipher = secretKeyManager.createEncryptCipher(secretKeyAlias)
 
-            val notifier = CountDownLatch(1)
+            cipher = AuthHelper(bioManager).authBiometricWithCipher(cipher)
+
+            val encryptedResponse = SecretKeyManager.encrypt(response, cipher)
+            challengeManager.setEncryptedResponseAsChallenge(challenge, encryptedResponse)
+        } catch (ex: AuthHelper.AuthException) {
             withContext(Dispatchers.Main) {
-                bioManager.biometricAuthenticate(
-                    BioManager.createAuthCallback({ authObj, _ ->
-                        // On success:
-                        activity.lifecycleScope.launch {
-                            try {
-                                val authenticatedCipher = authObj?.cipher!!
-                                withContext(Dispatchers.IO) {
-                                    val encryptedResponse = SecretKeyManager.encrypt(response, authenticatedCipher)
-                                    challengeManager.setEncryptedResponseAsChallenge(challenge, encryptedResponse)
-                                }
-                            } catch (ex: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    showFailedStoreMessage(ex)
-                                }
-                            } finally {
-                                notifier.countDown()
-                            }
-                        }
-                    }, {
-                        // On Fail:
-                        notifier.countDown()
-                        showFailedAuthMessage()
-                    }),
-                    authObj
-                )
-            }
-            withContext(Dispatchers.IO) {
-                notifier.await()
+                showFailedAuthMessage(ex)
             }
         } catch (ex: Exception) {
             withContext(Dispatchers.Main) {
@@ -139,15 +81,7 @@ class VirtualChallengeAuth(
         }
     }
 
-    open class AuthFailException : Exception {
-        constructor()
-        constructor(message: String?) : super(message)
-        constructor(cause: Throwable?) : super(cause)
-    }
-
     companion object {
         val TAG: String = VirtualChallengeAuth::class.java.simpleName
-
-
     }
 }

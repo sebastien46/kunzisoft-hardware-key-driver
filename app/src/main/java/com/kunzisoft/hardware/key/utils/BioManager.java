@@ -59,34 +59,4 @@ public class BioManager {
         }
         return prompt;
     }
-
-    @NonNull
-    public static BiometricPrompt.AuthenticationCallback createAuthCallback(@NonNull OnAuthResult onResult) {
-        return createAuthCallback(onResult, null);
-    }
-
-    @NonNull
-    public static BiometricPrompt.AuthenticationCallback createAuthCallback(@NonNull OnAuthResult onResult,
-                                                                            @Nullable Runnable onFail) {
-        return new BiometricPrompt.AuthenticationCallback() {
-            @Override
-            public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
-                onResult.handle(result.getCryptoObject(), result.getAuthenticationType());
-            }
-
-            @Override
-            public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-                if (onFail != null) onFail.run();
-            }
-
-            @Override
-            public void onAuthenticationFailed() {
-                if (onFail != null) onFail.run();
-            }
-        };
-    }
-
-    public interface OnAuthResult {
-        void handle(@Nullable BiometricPrompt.CryptoObject result, int authType);
-    }
 }

@@ -4,6 +4,7 @@ import androidx.biometric.BiometricPrompt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import javax.crypto.Cipher
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -11,7 +12,12 @@ class AuthHelper(private val bioManager: BioManager) {
     data class AuthResult(val cryptoObject: BiometricPrompt.CryptoObject?)
     data class AuthException(val errorCode: Int?, private val msg: String) : Exception(msg)
 
-    suspend fun performBioAuth(authObj: BiometricPrompt.CryptoObject?): AuthResult =
+    suspend fun authBiometricWithCipher(cipher: Cipher): Cipher {
+        val authObj = BiometricPrompt.CryptoObject(cipher)
+        return authBiometric(authObj).cryptoObject!!.cipher!!
+    }
+
+    suspend fun authBiometric(authObj: BiometricPrompt.CryptoObject?): AuthResult =
         withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { continuation ->
                 val callback = object : BiometricPrompt.AuthenticationCallback() {
@@ -24,7 +30,8 @@ class AuthHelper(private val bioManager: BioManager) {
                         super.onAuthenticationFailed()
                         if (!continuation.isCompleted) {
                             continuation.resumeWithException(
-                                AuthException(null, "auth failed"))
+                                AuthException(null, "auth failed")
+                            )
                         }
                     }
 
@@ -32,7 +39,8 @@ class AuthHelper(private val bioManager: BioManager) {
                         super.onAuthenticationError(errorCode, errString)
                         if (!continuation.isCompleted) {
                             continuation.resumeWithException(
-                                AuthException(errorCode, errString.toString()))
+                                AuthException(errorCode, errString.toString())
+                            )
                         }
                     }
                 }
