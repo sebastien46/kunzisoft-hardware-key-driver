@@ -41,6 +41,10 @@ class VirtualChallengeAuth(
         Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
+    fun doesSecretKeyExist(): Boolean {
+        return secretKeyManager?.hasSecretKey(secretKeyAlias) ?: false
+    }
+
     fun hasChallenge(challenge: ByteArray): Boolean {
         return challengeManager.hasChallenge(challenge)
     }

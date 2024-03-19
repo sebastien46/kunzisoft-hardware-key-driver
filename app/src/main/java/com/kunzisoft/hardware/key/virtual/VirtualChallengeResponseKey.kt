@@ -9,6 +9,7 @@ class VirtualChallengeResponseKey(
 ) : YubiKey.Suspended {
     override fun isAvailable(challenge: ByteArray): Boolean {
         return virtualChallengeAuth.hasChallenge(challenge)
+                && virtualChallengeAuth.doesSecretKeyExist()
     }
 
     @Throws(YubiKeyException::class)
