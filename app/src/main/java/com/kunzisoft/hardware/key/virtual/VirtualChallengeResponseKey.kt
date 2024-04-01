@@ -6,7 +6,7 @@ import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 
 class VirtualChallengeResponseKey(
     private val virtualChallengeAuth: VirtualChallengeAuth,
-) : YubiKey.Suspended {
+) : YubiKey.Suspended, YubiKey.Trial {
     override fun canRespondToChallenge(challenge: ByteArray): Boolean {
         return virtualChallengeAuth.hasChallenge(challenge)
                 && virtualChallengeAuth.doesSecretKeyExist()

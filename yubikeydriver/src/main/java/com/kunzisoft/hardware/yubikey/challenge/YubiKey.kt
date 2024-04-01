@@ -46,6 +46,13 @@ interface YubiKey {
         suspend fun challengeResponse(slot: Slot, challenge: ByteArray): ByteArray
     }
 
+    /**
+     * Mark a YubiKey implementation as a trial. Any key marked as a trial may fail, and other
+     * key types may be attempted instead. This key type should therefore not change the current
+     * state or any GUI elements, as this might break other tests.
+     */
+    interface Trial
+
     companion object {
         /**
          * Length of a response to a challenge-response request (in bytes)

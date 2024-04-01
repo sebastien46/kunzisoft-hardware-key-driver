@@ -132,7 +132,11 @@ class ChallengeResponseActivity : AppCompatActivity(),
         if (!yubiKey.canRespondToChallenge(challenge!!)) return
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
-        hideSlotSelection()
+
+        val isNonTrialKey = yubiKey !is YubiKey.Trial
+        if (isNonTrialKey) {
+            hideSlotSelection()
+        }
 
          lifecycleScope.launch {
              withContext(Dispatchers.IO) {
@@ -156,8 +160,10 @@ class ChallengeResponseActivity : AppCompatActivity(),
                          }
                          response
                      } catch (e: Exception) {
+                         Log.e(TAG, "Error during challenge-response request", e)
+                         if (!isNonTrialKey) return@async null
+
                          withContext(Dispatchers.Main) {
-                             Log.e(TAG, "Error during challenge-response request", e)
                              if (yubiKey is UsbYubiKey) {
                                  connectionManager.waitForYubiKeyUnplug(
                                      this@ChallengeResponseActivity,
@@ -187,7 +193,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                              returnResponse(response)
                          }
                      }
-                     hideSlotSelection()
+                     if (isNonTrialKey) {
+                         hideSlotSelection()
+                     }
                  }
              }
         }
