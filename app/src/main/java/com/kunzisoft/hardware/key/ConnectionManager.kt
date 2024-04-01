@@ -17,11 +17,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
-import android.widget.Toast
-import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.RECEIVER_EXPORTED
 import androidx.fragment.app.FragmentActivity
+import com.kunzisoft.hardware.key.utils.AuthHelper
 import com.kunzisoft.hardware.key.utils.BioManager
 import com.kunzisoft.hardware.key.virtual.VirtualChallengeAuth
 import com.kunzisoft.hardware.key.virtual.VirtualChallengeResponseKey
@@ -113,9 +112,6 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                 if (connectionMethods.isVirtualKeyConfigured) {
                     initVirtualKeyConnection(activity)
                 } else {
-                    if (connectionMethods.isVirtualChallengeConfigured) {
-                        initVirtualChallenge(activity)
-                    }
                     if (connectReceiver != null) {
                         if (connectionMethods.isUsbSupported) {
                             initUSBConnection(activity)
@@ -124,6 +120,11 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                             initNFCConnection(activity)
                         }
                     }
+                }
+
+                // 'connectReceiver' is null, if USB or NFC was found
+                if (connectionMethods.isVirtualChallengeConfigured) {
+                    initVirtualChallenge(activity)
                 }
             }
         }
@@ -139,6 +140,10 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         if (activity !is FragmentActivity) return
         val virtualChallengeAuth = VirtualChallengeAuth(activity, YUBICO_SECRET_KEY_ALIAS)
         virtualChallengeAuth.registerChallengeResponse(challenge, response)
+    }
+
+    private fun dismissVirtualChallengeResponse() {
+        AuthHelper.cancelBioPrompt()
     }
 
     private fun initVirtualKeyConnection(activity: Activity) {
@@ -259,6 +264,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             )
 
         activity.runOnUiThread {
+            dismissVirtualChallengeResponse()
             connectReceiver?.onYubiKeyConnected(NfcYubiKey(isoDep))
             connectReceiver = null
         }
@@ -271,6 +277,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     override fun onActivityStopped(activity: Activity) {
+        dismissVirtualChallengeResponse()
         try {
             if (connectReceiver != null || unplugReceiver != null) activity.unregisterReceiver(
                 this
@@ -292,6 +299,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                     Log.e("ConnectionManager", "Unable to disable NFC reader mode.", e)
                 }
             }
+            dismissVirtualChallengeResponse()
             connectReceiver!!.onYubiKeyConnected(UsbYubiKey(device, usbManager.openDevice(device)))
             connectReceiver = null
         } else if (!requestingUsbPermission) {

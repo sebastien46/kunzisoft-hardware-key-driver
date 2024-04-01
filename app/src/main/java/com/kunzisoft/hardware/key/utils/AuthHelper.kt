@@ -23,11 +23,13 @@ class AuthHelper(private val bioManager: BioManager) {
                 val callback = object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                         super.onAuthenticationSucceeded(result)
+                        resetBioPrompt()
                         continuation.resume(AuthResult(result.cryptoObject))
                     }
 
                     override fun onAuthenticationFailed() {
                         super.onAuthenticationFailed()
+                        resetBioPrompt()
                         if (!continuation.isCompleted) {
                             continuation.resumeWithException(
                                 AuthException(null, "auth failed")
@@ -37,6 +39,7 @@ class AuthHelper(private val bioManager: BioManager) {
 
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         super.onAuthenticationError(errorCode, errString)
+                        resetBioPrompt()
                         if (!continuation.isCompleted) {
                             continuation.resumeWithException(
                                 AuthException(errorCode, errString.toString())
@@ -45,10 +48,24 @@ class AuthHelper(private val bioManager: BioManager) {
                     }
                 }
 
-                val bioPrompt = bioManager.biometricAuthenticate(callback, authObj)
+                cancelBioPrompt()
+                ongoingBioPrompt = bioManager.biometricAuthenticate(callback, authObj)
                 continuation.invokeOnCancellation {
-                    bioPrompt.cancelAuthentication()
+                    cancelBioPrompt()
                 }
             }
         }
+
+    companion object {
+        private var ongoingBioPrompt: BiometricPrompt? = null
+
+        fun cancelBioPrompt() {
+            ongoingBioPrompt?.cancelAuthentication()
+            resetBioPrompt()
+        }
+
+        private fun resetBioPrompt() {
+            ongoingBioPrompt = null
+        }
+    }
 }
