@@ -50,6 +50,7 @@
     <string name="default_slot_description">First default slot selected during a challenge-response</string>
     <string name="slot_1">Slot 1</string>
     <string name="slot_2">Slot 2</string>
+    <string name="slot_virtual_response">Virtual</string>
     <string name="virtualization">Virtualization</string>
     <string name="virtual_key_pref" translatable="false">virtual_key_pref</string>
     <string name="virtual_key">Use as virtual hardware key</string>

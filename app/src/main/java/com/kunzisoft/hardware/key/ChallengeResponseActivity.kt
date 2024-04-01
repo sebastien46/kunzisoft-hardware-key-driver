@@ -96,6 +96,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                 selectSlot(Slot.CHALLENGE_HMAC_2)
         }
 
+        binding.slotVirtualResponse.setOnClickListener {
+            recreate()
+        }
         binding.retryButton.setOnClickListener {
             recreate()
         }
@@ -132,6 +135,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
         if (!yubiKey.canRespondToChallenge(challenge!!)) return
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
+        if (yubiKey is VirtualChallengeResponseKey)
+            binding.slotVirtualResponse.visibility = View.VISIBLE
 
         val isNonTrialKey = yubiKey !is YubiKey.Trial
         if (isNonTrialKey) {
