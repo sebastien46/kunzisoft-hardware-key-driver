@@ -9,7 +9,7 @@ import com.kunzisoft.hardware.yubikey.Slot
  * implementations
  */
 interface YubiKey {
-    fun isAvailable(challenge: ByteArray): Boolean {
+    fun canRespondToChallenge(challenge: ByteArray): Boolean {
         return true
     }
 

@@ -129,7 +129,7 @@ class ChallengeResponseActivity : AppCompatActivity(),
     }
 
     override fun onYubiKeyConnected(yubiKey: YubiKey) {
-        if (!yubiKey.isAvailable(challenge!!)) return
+        if (!yubiKey.canRespondToChallenge(challenge!!)) return
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
         hideSlotSelection()

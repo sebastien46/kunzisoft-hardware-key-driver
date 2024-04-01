@@ -181,7 +181,7 @@ public class UsbYubiKey implements YubiKey.Blocking {
 	}
 
 	@Override
-	public boolean isAvailable(@NonNull byte[] challenge) {
+	public boolean canRespondToChallenge(@NonNull byte[] challenge) {
 		return true;
 	}
 
