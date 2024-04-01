@@ -1,5 +1,6 @@
 package com.kunzisoft.hardware.key.utils;
 
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -38,8 +39,13 @@ public class SecretKeyHelper {
     public boolean createSecretKey(@NonNull String secretKeyAlias) {
         if (checkIfNoKeyManager()) return false;
         try {
-            SecretKeyManager.createSecretKey(secretKeyAlias);
-            return true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                SecretKeyManager.createSecretKey(secretKeyAlias);
+                return true;
+            } else {
+                Log.e(TAG, "SDK version must be at least 23 (Android 6.0)");
+                return false;
+            }
         } catch (KeyStoreException ex) {
             Log.e(TAG, "unable to create secret key for key manager", ex);
             return false;

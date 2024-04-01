@@ -1,5 +1,6 @@
 package com.kunzisoft.hardware.key
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.preference.ListPreference
@@ -45,8 +46,9 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
+        val canGenerateSecretKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
         val clearVirtualChallengePref = findPreference<Preference>(getString(R.string.clear_virtual_challenges_pref))?.apply {
-            isEnabled = secretKeyManager.hasSecretKey(secretKeyAlias)
+            isEnabled = canGenerateSecretKey && secretKeyManager.hasSecretKey(secretKeyAlias)
 
             setOnPreferenceClickListener {
                 if (clearVirtualChallenge()) {
@@ -58,6 +60,7 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<SwitchPreferenceCompat>(getString(R.string.virtual_challenge_pref))?.apply {
             isChecked = clearVirtualChallengePref?.isEnabled ?: false
+            isEnabled = canGenerateSecretKey
 
             setOnPreferenceChangeListener { _, newValue ->
                 if (newValue as Boolean) {
