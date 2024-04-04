@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import com.kunzisoft.hardware.key.utils.BioManager
 import com.kunzisoft.hardware.key.utils.ChallengeManager
 import com.kunzisoft.hardware.key.utils.SecretKeyHelper
 import com.kunzisoft.hardware.yubikey.Slot
@@ -46,9 +47,14 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        val canGenerateSecretKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        // Virtual challenge response:
+        val hasAtLeastSdkVersion23 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        val hasBiometricAuth = BioManager.canDoBiometricAuthentication(requireContext())
+        val canUseVirtualChallengeResponse = hasAtLeastSdkVersion23 && hasBiometricAuth
+
         val clearVirtualChallengePref = findPreference<Preference>(getString(R.string.clear_virtual_challenges_pref))?.apply {
-            isEnabled = canGenerateSecretKey && secretKeyManager.hasSecretKey(secretKeyAlias)
+            isEnabled = canUseVirtualChallengeResponse && secretKeyManager.hasSecretKey(secretKeyAlias)
+            isVisible = canUseVirtualChallengeResponse
 
             setOnPreferenceClickListener {
                 if (clearVirtualChallenge()) {
@@ -60,23 +66,30 @@ class YubikeySettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<SwitchPreferenceCompat>(getString(R.string.virtual_challenge_pref))?.apply {
             isChecked = clearVirtualChallengePref?.isEnabled ?: false
-            isEnabled = canGenerateSecretKey
+            isEnabled = canUseVirtualChallengeResponse
+
+            if (!hasAtLeastSdkVersion23) {
+                setSummary(R.string.virtual_challenge_description_fail_sdk_version_23)
+            } else if (!hasBiometricAuth) {
+                setSummary(R.string.virtual_challenge_description_fail_no_biometrics)
+            }
 
             setOnPreferenceChangeListener { _, newValue ->
                 if (newValue as Boolean) {
                     if (initVirtualChallenge()) {
                         clearVirtualChallengePref?.isEnabled = true
+                        true
                     } else {
-                        isChecked = false
+                        false
                     }
                 } else {
                     if (clearVirtualChallenge()) {
                         clearVirtualChallengePref?.isEnabled = false
+                        true
                     } else {
-                        isChecked = true
+                        false
                     }
                 }
-                true
             }
         }
     }

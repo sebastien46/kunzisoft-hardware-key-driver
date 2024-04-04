@@ -61,6 +61,8 @@
     <string name="virtual_challenge_pref" translatable="false">virtual_challenge_pref</string>
     <string name="virtual_challenge">Remember challenge responses</string>
     <string name="virtual_challenge_description">Save response of each challenge so the hardware key is only needed once</string>
+    <string name="virtual_challenge_description_fail_sdk_version_23">Not available: Requires Android 6.0 or higher</string>
+    <string name="virtual_challenge_description_fail_no_biometrics">Not available: No biometric authentication method</string>
     <string name="clear_virtual_challenges_pref" translatable="false">clear_virtual_challenges_pref</string>
     <string name="clear_virtual_challenges">Delete saved responses</string>
     <string name="clear_virtual_challenges_description">Delete all saved responses and recreate storage encryption key</string>
