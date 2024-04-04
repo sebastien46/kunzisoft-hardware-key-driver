@@ -10,7 +10,7 @@ import kotlin.coroutines.resumeWithException
 
 class AuthHelper(private val bioManager: BioManager) {
     data class AuthResult(val cryptoObject: BiometricPrompt.CryptoObject?)
-    data class AuthException(val errorCode: Int?, private val msg: String) : Exception(msg)
+    data class AuthException(val errorCode: Int, private val msg: String) : Exception(msg)
 
     suspend fun authBiometricWithCipher(cipher: Cipher): Cipher {
         val authObj = BiometricPrompt.CryptoObject(cipher)
@@ -25,16 +25,6 @@ class AuthHelper(private val bioManager: BioManager) {
                         super.onAuthenticationSucceeded(result)
                         resetBioPrompt()
                         continuation.resume(AuthResult(result.cryptoObject))
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        resetBioPrompt()
-                        if (!continuation.isCompleted) {
-                            continuation.resumeWithException(
-                                AuthException(null, "auth failed")
-                            )
-                        }
                     }
 
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
