@@ -42,6 +42,7 @@ class NfcYubiKey
             if (!putResponseApdu.isSuccess) {
                 throw YubiKeyException("Failed operation")
             }
+            tag.close()
             putResponseApdu.result
         } catch (e: IOException) {
             throw YubiKeyException(e)
