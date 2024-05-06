@@ -163,8 +163,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
                  withContext(Dispatchers.Main) {
                      val response = asyncResult.await()
                      if (response != null) {
+                         keySoundManager.notifySuccess()
                          if (yubiKey is NfcYubiKey) {
-                             keySoundManager.notifySuccess()
                              askToUnpluggedNfc(response)
                          } else {
                              returnResponse(response)

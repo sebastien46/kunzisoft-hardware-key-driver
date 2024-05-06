@@ -30,7 +30,7 @@
     <string name="usb_permission_denied">USB permission denied. Unplug your YubiKey.</string>
     <string name="retry">Retry</string>
     <string name="ok">OK</string>
-    <string name="success_unplug_nfc_key">Response generated, remove the key from the NFC reader and press OK to return to the app requiring the challenge.</string>
+    <string name="success_unplug_nfc_key">Response generated!\n\nRemove the key from the NFC reader and press OK to return to the app requiring the challenge.</string>
 
     <string name="hardware_key">Hardware Key</string>
     <string name="solokey_pref" translatable="false">solokey_pref</string>
