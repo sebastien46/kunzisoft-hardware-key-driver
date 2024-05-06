@@ -1,0 +1,4 @@
+ * Upgrade libs
+ * New workflow to validate NFC
+ * New monochrome icon [Thanks @sdelord1)
+ * Small fixes (Thanks @roihershberg)
