@@ -163,22 +163,41 @@ class ChallengeResponseActivity : AppCompatActivity(),
                  withContext(Dispatchers.Main) {
                      val response = asyncResult.await()
                      if (response != null) {
+                         keySoundManager.notifySuccess()
                          if (yubiKey is NfcYubiKey) {
-                             keySoundManager.notifySuccess()
+                             askToUnpluggedNfc(response)
+                         } else {
+                             returnResponse(response)
                          }
-                         slotPreferenceManager.setPreferredSlot(
-                             purpose,
-                             selectedSlot
-                         )
-                         val result = Intent()
-                         result.putExtra(RESPONSE_TAG, response)
-                         this@ChallengeResponseActivity.setResult(RESULT_OK, result)
-                         finish()
                      }
                      hideSlotSelection()
                  }
              }
         }
+    }
+
+    private fun askToUnpluggedNfc(response: ByteArray?) {
+        setText(R.string.success_unplug_nfc_key, false)
+        binding.waiting.visibility = View.INVISIBLE
+        hideSlotSelection()
+        binding.okButton.apply {
+            visibility = View.VISIBLE
+            setOnClickListener {
+                visibility = View.GONE
+                returnResponse(response)
+            }
+        }
+    }
+
+    private fun returnResponse(response: ByteArray?) {
+        slotPreferenceManager.setPreferredSlot(
+            purpose,
+            selectedSlot
+        )
+        val result = Intent()
+        result.putExtra(RESPONSE_TAG, response)
+        this@ChallengeResponseActivity.setResult(RESULT_OK, result)
+        finish()
     }
 
     override fun onYubiKeyUnplugged() {

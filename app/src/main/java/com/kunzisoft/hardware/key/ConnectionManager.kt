@@ -17,6 +17,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.RECEIVER_EXPORTED
 import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
@@ -43,6 +45,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     private var usbPermissionDeniedReceiver: UsbPermissionDeniedReceiver? = null
 
     private var requestingUsbPermission: Boolean = false
+    private var activityPausedForUsbPermission: Boolean = false
 
     private val connectionMethods = getSupportedConnectionMethods(activity)
 
@@ -92,17 +95,23 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     override fun onActivityStarted(activity: Activity) {}
 
     override fun onActivityResumed(activity: Activity) {
-        // Debug with dummy connection if no supported connection
-        if (connectionMethods.hasAnySupport) {
-            if (connectionMethods.isVirtualKeyConfigured) {
-                initVirtualKeyConnection(activity)
-            } else {
-                if (connectReceiver != null) {
-                    if (connectionMethods.isUsbSupported) {
-                        initUSBConnection(activity)
-                    }
-                    if (connectionMethods.isNfcSupported) {
-                        initNFCConnection(activity)
+        // Don't initialize a connection when the activity has just been resumed from the
+        // USB permission dialog (connection has already been initialized).
+        if (activityPausedForUsbPermission) {
+            activityPausedForUsbPermission = false
+        } else {
+            // Debug with dummy connection if no supported connection
+            if (connectionMethods.hasAnySupport) {
+                if (connectionMethods.isVirtualKeyConfigured) {
+                    initVirtualKeyConnection(activity)
+                } else {
+                    if (connectReceiver != null) {
+                        if (connectionMethods.isUsbSupported) {
+                            initUSBConnection(activity)
+                        }
+                        if (connectionMethods.isNfcSupported) {
+                            initNFCConnection(activity)
+                        }
                     }
                 }
             }
@@ -115,8 +124,8 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     private fun initUSBConnection(activity: Activity) {
-        activity.registerReceiver(this, IntentFilter(ACTION_USB_PERMISSION_REQUEST))
-        activity.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED))
+        ContextCompat.registerReceiver(activity, this, IntentFilter(ACTION_USB_PERMISSION_REQUEST), RECEIVER_EXPORTED)
+        ContextCompat.registerReceiver(activity, this, IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED), RECEIVER_EXPORTED)
 
         val usbManager = activity.getSystemService(Context.USB_SERVICE) as UsbManager
         for (device in usbManager.deviceList.values) {
@@ -169,7 +178,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             return
         }
         unplugReceiver = receiver
-        context.registerReceiver(this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
+        ContextCompat.registerReceiver(context, this, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED), RECEIVER_EXPORTED)
     }
 
     fun registerUsbPermissionDeniedReceiver(receiver: UsbPermissionDeniedReceiver) {
@@ -272,10 +281,13 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
 
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         }
 
+        activityPausedForUsbPermission = true
         usbManager.requestPermission(
             device,
             PendingIntent.getBroadcast(
