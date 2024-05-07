@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kunzisoft.hardware.key.databinding.ActivityChallengeBinding
+import com.kunzisoft.hardware.key.virtual.VirtualChallengeResponseKey
 import com.kunzisoft.hardware.yubikey.Slot
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
@@ -75,6 +76,8 @@ class ChallengeResponseActivity : AppCompatActivity(),
             setText(R.string.attach_yubikey)
         } else if (connectionMethods.isNfcSupported) {
             setText(R.string.swipe_yubikey)
+        } else if (connectionMethods.isVirtualChallengeConfigured) {
+            setText(R.string.virtual_challenge_fetch)
         } else if (connectionMethods.isVirtualKeyConfigured) {
             setText(R.string.virtual_key_generate)
         } else {
@@ -93,6 +96,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                 selectSlot(Slot.CHALLENGE_HMAC_2)
         }
 
+        binding.slotVirtualResponse.setOnClickListener {
+            recreate()
+        }
         binding.retryButton.setOnClickListener {
             recreate()
         }
@@ -126,21 +132,43 @@ class ChallengeResponseActivity : AppCompatActivity(),
     }
 
     override fun onYubiKeyConnected(yubiKey: YubiKey) {
+        if (!yubiKey.canRespondToChallenge(challenge!!)) return
         if (yubiKey is UsbYubiKey)
             binding.info.setText(R.string.press_button)
-        hideSlotSelection()
+        if (yubiKey is VirtualChallengeResponseKey)
+            binding.slotVirtualResponse.visibility = View.VISIBLE
+
+        val isNonTrialKey = yubiKey !is YubiKey.Trial
+        if (isNonTrialKey) {
+            hideSlotSelection()
+        }
 
          lifecycleScope.launch {
              withContext(Dispatchers.IO) {
                  val asyncResult: Deferred<ByteArray?> = async {
                      try {
-                         yubiKey.challengeResponse(
-                             selectedSlot,
-                             challenge!!
-                         )
+                         val challenge = this@ChallengeResponseActivity.challenge!!
+                         val response = when (yubiKey) {
+                             is YubiKey.Blocking -> yubiKey.challengeResponse(
+                                 selectedSlot,
+                                 challenge
+                             )
+                             is YubiKey.Suspended -> yubiKey.challengeResponse(
+                                 selectedSlot,
+                                 challenge
+                             )
+                             else -> throw IllegalArgumentException("unknown YubiKey Type")
+                         }
+
+                         if (yubiKey !is VirtualChallengeResponseKey) {
+                             connectionManager.registerVirtualChallengeResponse(challenge, response)
+                         }
+                         response
                      } catch (e: Exception) {
+                         Log.e(TAG, "Error during challenge-response request", e)
+                         if (!isNonTrialKey) return@async null
+
                          withContext(Dispatchers.Main) {
-                             Log.e(TAG, "Error during challenge-response request", e)
                              if (yubiKey is UsbYubiKey) {
                                  connectionManager.waitForYubiKeyUnplug(
                                      this@ChallengeResponseActivity,
@@ -170,7 +198,9 @@ class ChallengeResponseActivity : AppCompatActivity(),
                              returnResponse(response)
                          }
                      }
-                     hideSlotSelection()
+                     if (isNonTrialKey) {
+                         hideSlotSelection()
+                     }
                  }
              }
         }

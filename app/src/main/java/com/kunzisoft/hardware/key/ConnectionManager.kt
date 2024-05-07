@@ -19,19 +19,26 @@ import android.os.Parcelable
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.RECEIVER_EXPORTED
-import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
+import androidx.fragment.app.FragmentActivity
+import com.kunzisoft.hardware.key.utils.AuthHelper
+import com.kunzisoft.hardware.key.utils.BioManager
+import com.kunzisoft.hardware.key.virtual.VirtualChallengeAuth
+import com.kunzisoft.hardware.key.virtual.VirtualChallengeResponseKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 
 internal data class ConnectionMethods(
     val isUsbSupported: Boolean,
     val isNfcSupported: Boolean,
+    val isVirtualChallengeConfigured: Boolean,
     val isVirtualKeyConfigured: Boolean
 )
 
 internal val ConnectionMethods.hasAnySupport: Boolean
     get() = isUsbSupported || isNfcSupported || isVirtualKeyConfigured
+            || isVirtualChallengeConfigured
 
 /**
  * Manages the lifecycle of a YubiKey connection via USB or NFC.
@@ -113,9 +120,30 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                             initNFCConnection(activity)
                         }
                     }
+
+                    // 'connectReceiver' is null, if USB or NFC was found
+                    if (connectionMethods.isVirtualChallengeConfigured) {
+                        initVirtualChallenge(activity)
+                    }
                 }
             }
         }
+    }
+
+    private fun initVirtualChallenge(activity: Activity) {
+        if (activity !is FragmentActivity) return
+        val virtualChallengeAuth = VirtualChallengeAuth(activity, YUBICO_SECRET_KEY_ALIAS)
+        connectReceiver?.onYubiKeyConnected(VirtualChallengeResponseKey(virtualChallengeAuth))
+    }
+
+    suspend fun registerVirtualChallengeResponse(challenge: ByteArray, response: ByteArray) {
+        if (activity !is FragmentActivity) return
+        val virtualChallengeAuth = VirtualChallengeAuth(activity, YUBICO_SECRET_KEY_ALIAS)
+        virtualChallengeAuth.registerChallengeResponse(challenge, response)
+    }
+
+    private fun dismissVirtualChallengeResponse() {
+        AuthHelper.cancelBioPrompt()
     }
 
     private fun initVirtualKeyConnection(activity: Activity) {
@@ -236,6 +264,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             )
 
         activity.runOnUiThread {
+            dismissVirtualChallengeResponse()
             connectReceiver?.onYubiKeyConnected(NfcYubiKey(isoDep))
             connectReceiver = null
         }
@@ -248,6 +277,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     override fun onActivityStopped(activity: Activity) {
+        dismissVirtualChallengeResponse()
         try {
             if (connectReceiver != null || unplugReceiver != null) activity.unregisterReceiver(
                 this
@@ -269,6 +299,7 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                     Log.e("ConnectionManager", "Unable to disable NFC reader mode.", e)
                 }
             }
+            dismissVirtualChallengeResponse()
             connectReceiver!!.onYubiKeyConnected(UsbYubiKey(device, usbManager.openDevice(device)))
             connectReceiver = null
         } else if (!requestingUsbPermission) {
@@ -320,7 +351,8 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
             isNfcSupported = true
         }
 
-        return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualKeyConfigured)
+        val isVirtualChallengeConfigured = BioManager.canDoBiometricAuthentication(context)
+        return ConnectionMethods(isUsbSupported, isNfcSupported, isVirtualChallengeConfigured, isVirtualKeyConfigured)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
@@ -330,6 +362,8 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
     }
 
     companion object {
+        const val YUBICO_SECRET_KEY_ALIAS = "yubico_virtual_key"
+
         private const val ACTION_USB_PERMISSION_REQUEST =
             "android.yubikey.intent.action.USB_PERMISSION_REQUEST"
     }

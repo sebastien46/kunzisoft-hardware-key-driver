@@ -27,4 +27,19 @@
             app:summary="@string/recovery_key_description"/>
 
     </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="virtual_challenge_category_pref"
+        app:title="@string/challenge_virtualization">
+
+        <SwitchPreferenceCompat
+            app:key="@string/virtual_challenge_pref"
+            app:title="@string/virtual_challenge"
+            app:summary="@string/virtual_challenge_description"/>
+        <Preference
+            app:key="@string/clear_virtual_challenges_pref"
+            app:enabled="false"
+            app:title="@string/clear_virtual_challenges"
+            app:summary="@string/clear_virtual_challenges_description"/>
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -8,7 +8,7 @@ import java.io.IOException
 /**
  * Virtual Recovery YubiKey implementation.
  */
-class VirtualYubiKey(private val mContext: Context) : YubiKey {
+class VirtualYubiKey(private val mContext: Context) : YubiKey.Blocking {
 
     @Throws(YubiKeyException::class)
     override fun challengeResponse(slot: Slot, challenge: ByteArray): ByteArray {

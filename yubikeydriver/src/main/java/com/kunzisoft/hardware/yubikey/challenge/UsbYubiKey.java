@@ -14,7 +14,7 @@ import com.kunzisoft.hardware.yubikey.YubiKeyException;
 /**
  * USB YubiKey driver implementation.
  */
-public class UsbYubiKey implements YubiKey {
+public class UsbYubiKey implements YubiKey.Blocking {
 	private final UsbDeviceConnection connection;
 	private final UsbDevice           device;
 
@@ -178,6 +178,11 @@ public class UsbYubiKey implements YubiKey {
 		}
 
 		return (response[0] << 24) + (response[1] << 16) + (response[2] << 8) + (response[3] & 0xff);
+	}
+
+	@Override
+	public boolean canRespondToChallenge(@NonNull byte[] challenge) {
+		return true;
 	}
 
 	@NonNull

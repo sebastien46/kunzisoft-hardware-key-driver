@@ -15,7 +15,7 @@ class NfcYubiKey
  * Should only be instantiated by the [com.kunzisoft.hardware.key.ConnectionManager].
  *
  * @param tag YubiKey NEOs provide the functionality of ISO-DEP (14443-4) tags.
- */(private val tag: IsoDep) : YubiKey {
+ */(private val tag: IsoDep) : YubiKey.Blocking {
     @Throws(IOException::class)
     private fun ensureConnected() {
         if (!tag.isConnected) {
