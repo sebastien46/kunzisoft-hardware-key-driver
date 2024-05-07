@@ -19,9 +19,7 @@ import us.q3q.fidok.ctap.commands.PublicKeyCredentialRpEntity
 import us.q3q.fidok.ctap.commands.PublicKeyCredentialUserEntity
 import us.q3q.fidok.nfc.AndroidNFCDevice
 import us.q3q.fidok.usb.AndroidUSBHIDDevice
-import us.q3q.fidok.webauthn.AuthenticatorSelectionCriteria
-import us.q3q.fidok.webauthn.PublicKeyCredentialCreationOptions
-import us.q3q.fidok.webauthn.PublicKeyCredentialRequestOptions
+import us.q3q.fidok.webauthn.*
 import kotlin.random.Random
 
 
@@ -179,6 +177,9 @@ class FIDOHMACActivity : AppCompatActivity(),
         return HmacResult(
             result1 = res1,
             result2 = res2,
+            clientData = r.response.clientDataJSON,
+            attestation = null,
+            signature = (r.response as AuthenticatorAssertionResponse).signature,
             credentialId = r.rawId
         )
     }
@@ -214,6 +215,9 @@ class FIDOHMACActivity : AppCompatActivity(),
         return HmacResult(
             result1 = null,
             result2 = null,
+            clientData = r.response.clientDataJSON,
+            attestation = (r.response as AuthenticatorAttestationResponse).attestationObject,
+            signature = null,
             credentialId = r.rawId,
         )
     }
@@ -301,6 +305,13 @@ class FIDOHMACActivity : AppCompatActivity(),
                              result.putExtra(RESPONSE_2_TAG, response.result2)
                          }
                          result.putExtra(RESPONSE_CREDENTIAL_TAG, response.credentialId)
+                         if (response.signature != null) {
+                             result.putExtra(RESPONSE_SIGNATURE, response.signature)
+                         }
+                         if (response.attestation != null) {
+                             result.putExtra(RESPONSE_ATTESTATION, response.attestation)
+                         }
+                         result.putExtra(RESPONSE_CLIENT_DATA, response.clientData)
                          this@FIDOHMACActivity.setResult(RESULT_OK, result)
                          finish()
                      }
@@ -353,6 +364,9 @@ class FIDOHMACActivity : AppCompatActivity(),
     internal data class HmacResult(
         val result1: ByteArray?,
         val result2: ByteArray?,
+        val clientData: ByteArray,
+        val attestation: ByteArray?,
+        val signature: ByteArray?,
         val credentialId: ByteArray
     )
 
@@ -375,5 +389,8 @@ class FIDOHMACActivity : AppCompatActivity(),
         const val RESPONSE_1_TAG = "response"
         const val RESPONSE_2_TAG = "response_2"
         const val RESPONSE_CREDENTIAL_TAG = "credentialId"
+        const val RESPONSE_SIGNATURE = "signature"
+        const val RESPONSE_ATTESTATION = "attestation"
+        const val RESPONSE_CLIENT_DATA = "clientData"
     }
 }

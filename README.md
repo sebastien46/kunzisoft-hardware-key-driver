@@ -29,10 +29,15 @@ or onboard user verification (or both).
 The client application needs to call a Key Driver activity for a response to be provided. For this, one must send an Intent `android.fido.intent.action.HMAC_SECRET_CREATE` with extra data:
 
 - `String rpId`: The FIDO2 Relying Party ID for which the Credential is being created. This will be displayed to the user.
+- `byte[] clientData`: Optional 32-byte blob to be included in the signature for the credential. This avoids cases where a previously-created
+  credential is maliciously returned to a new creation request.
 
 After the user's action, the Key Driver activity will return an extra:
 
 - `byte[] credentialId`: The FIDO Credential ID that was created. This Credential has support for the `hmac-secret` extension and can be used later.
+- `byte[] attestation`: This is a WebAuthn Attested Credential object that may be decoded to verify the returned credential corresponds to the given `clientData` and 
+  comes from a satisfactory authenticator.
+- `byte[] clientData`: The encoded representation of the clientData used for the response, used in checking the attestation.
 
 #### Getting a response for an existing Credential
 
@@ -46,6 +51,7 @@ The client application needs to call a Key Driver activity for a response to be 
   a FIDO2 Discoverable Credential (aka a Resident Key).
 - `byte[] credential_0`, `byte[] credential_1`,  through `byte[] credential_<numCredentials>`: FIDO Credential IDs, as provided by the Authenticator being used. The response
   will pertain to one of these credentials if any are provided.
+- `byte[] clientData`: As in credential creation, this is a 32-byte optional array that helps to avoid replay attacks.
 
 After the user's action, the Key Driver activity will return extras:
 
@@ -53,10 +59,12 @@ After the user's action, the Key Driver activity will return extras:
 - `byte[] response_2`: Response to `challenge_2`. Only present if `challenge_2` was provided.
 - `byte[] credentialId`: The FIDO Credential ID that was used to generate the responses. May be one of the Credentials provided in the input, or will be a Discoverable Credential's ID
    if no input Credentials were provided.
+- `byte[] signature`: The authenticator's signature for this response, which may be checked against the public-key portion of the `attestation` given when the credential was created.
+- `byte[] clientData`: The encoded representation of the clientData used for the response, used in checking the signature.
 
 ```kotlin
-
 private var getHMACResultLauncher: ActivityResultLauncher<Intent>? = null
+private var clientData = Random.Default.nextBytes(32)
 
 // Request with a challenge
 fun launchChallengeForResponse(seed1: ByteArray, seed2: ByteArray?, credentials: List<ByteArray>) {
@@ -64,6 +72,7 @@ fun launchChallengeForResponse(seed1: ByteArray, seed2: ByteArray?, credentials:
     getHMACResultLauncher?.launch(
         Intent("android.fido.intent.action.HMAC_SECRET_CHALLENGE_RESPONSE").apply {
             putExtra("rpId", "relyingparty.for.example")
+            putExtra("clientData", clientData)
             putExtra("challenge", seed1)
             putExtra("challenge_2", seed2)
             putExtra("numCredentials", credentials.size)
@@ -75,12 +84,22 @@ fun launchChallengeForResponse(seed1: ByteArray, seed2: ByteArray?, credentials:
 }
 
 // Wait for the response
-fun buildHardwareKeyResponse(onChallengeResponded: (challengeResponse: ByteArray?) -> Unit) {
+fun buildHardwareKeyResponse(
+    verifySignature: (expectedClientData: ByteArray, usedClientData: ByteArray, signature: ByteArray) -> Boolean,
+    onChallengeResponded: (response1: ByteArray?, response2: ByteArray?) -> Unit) {
     val resultCallback = ActivityResultCallback<ActivityResult> { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val challengeResponse1: ByteArray? = result.data?.getByteArrayExtra("response")
-            val challengeResponse2: ByteArray? = result.data?.getByteArrayExtra("response_2")
-            onChallengeResponded.invoke(challengeResponse1, challengeResponse2)
+            // Signature verification is an optional defense against man-in-the-middle attacks
+            val usedClientData = result.data?.getByteArrayExtra("clientData")
+            val signature = result.data?.getByteArrayExtra("signature")
+            if (!verifySignature(clientData, usedClientData, signature)) {
+                // Response didn't correspond to the request we made, somehow
+                onChallengeResponded.invoke(null, null)
+            } else {
+                val challengeResponse1: ByteArray? = result.data?.getByteArrayExtra("response")
+                val challengeResponse2: ByteArray? = result.data?.getByteArrayExtra("response_2")
+                onChallengeResponded.invoke(challengeResponse1, challengeResponse2)
+            }
         } else {
             onChallengeResponded.invoke(null, null)
         }
