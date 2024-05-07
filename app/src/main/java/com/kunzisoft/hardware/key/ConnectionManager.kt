@@ -120,11 +120,11 @@ internal class ConnectionManager(private val activity: Activity) : BroadcastRece
                             initNFCConnection(activity)
                         }
                     }
-                }
 
-                // 'connectReceiver' is null, if USB or NFC was found
-                if (connectionMethods.isVirtualChallengeConfigured) {
-                    initVirtualChallenge(activity)
+                    // 'connectReceiver' is null, if USB or NFC was found
+                    if (connectionMethods.isVirtualChallengeConfigured) {
+                        initVirtualChallenge(activity)
+                    }
                 }
             }
         }
