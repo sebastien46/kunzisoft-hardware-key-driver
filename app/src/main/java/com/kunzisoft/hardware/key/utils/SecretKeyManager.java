@@ -44,7 +44,9 @@ public class SecretKeyManager {
         return keyStore.containsAlias(secretKeyAlias);
     }
 
-    /** @noinspection UnusedReturnValue */
+    /**
+     * @noinspection UnusedReturnValue
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static SecretKey createSecretKey(String secretKeyAlias) throws KeyStoreException {
         try {

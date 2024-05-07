@@ -24,9 +24,9 @@ import com.kunzisoft.hardware.key.utils.AuthHelper
 import com.kunzisoft.hardware.key.utils.BioManager
 import com.kunzisoft.hardware.key.virtual.VirtualChallengeAuth
 import com.kunzisoft.hardware.key.virtual.VirtualChallengeResponseKey
-import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.NfcYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.UsbYubiKey
+import com.kunzisoft.hardware.yubikey.challenge.VirtualYubiKey
 import com.kunzisoft.hardware.yubikey.challenge.YubiKey
 
 internal data class ConnectionMethods(
